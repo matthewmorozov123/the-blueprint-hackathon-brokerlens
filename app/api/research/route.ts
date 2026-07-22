@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import type { BusinessData } from "@/lib/valuation";
 
+export const runtime = "nodejs";
+export const maxDuration = 60;
+
 type OpenAIAnnotation = {
   type?: string;
   url?: string;

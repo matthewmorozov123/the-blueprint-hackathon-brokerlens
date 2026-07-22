@@ -41,9 +41,18 @@ npm test
 npm run lint
 ```
 
+## Deploy to Vercel
+
+Import the repository into Vercel. The framework preset should be **Next.js**,
+the build command should be `npm run build`, and the output directory should be
+left blank so Vercel uses the standard `.next` output automatically.
+
+The valuation works without secrets. Add `OPENAI_API_KEY` in Vercel's Environment
+Variables settings to enable live market research, then redeploy. Optionally set
+`OPENAI_MODEL` to `gpt-5.6-sol`.
+
 ## Important limitation
 
 BrokerLens produces a preliminary broker opinion, not a certified appraisal. The
 MVP requires the broker to confirm financial inputs and add-backs. Document extraction,
 licensed transaction databases, and backtesting are logical next integrations.
-
