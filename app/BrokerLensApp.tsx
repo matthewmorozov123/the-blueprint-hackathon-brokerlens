@@ -13,12 +13,14 @@ import {
   Landmark,
   LineChart,
   Loader2,
+  Moon,
   Plus,
   RotateCcw,
   Save,
   Search,
   ShieldCheck,
   Sparkles,
+  Sun,
   Upload,
   X,
 } from "lucide-react";
@@ -181,6 +183,14 @@ export function BrokerLensApp() {
     }
   };
 
+  const toggleTheme = () => {
+    const root = document.documentElement;
+    const nextTheme = root.dataset.theme === "dark" ? "light" : "dark";
+    root.dataset.theme = nextTheme;
+    root.style.colorScheme = nextTheme;
+    localStorage.setItem("brokerlens.theme", nextTheme);
+  };
+
   return (
     <main className="app-shell">
       <header className="topbar">
@@ -192,6 +202,16 @@ export function BrokerLensApp() {
           <span className="status-dot" /> Preliminary valuation workspace
         </div>
         <div className="top-actions">
+          <button
+            className="theme-toggle"
+            type="button"
+            onClick={toggleTheme}
+            aria-label="Toggle dark mode"
+            title="Toggle dark mode"
+          >
+            <Moon className="theme-icon theme-icon-moon" size={16} />
+            <Sun className="theme-icon theme-icon-sun" size={16} />
+          </button>
           <button className="button button-ghost" onClick={() => setShowProjects(true)}>
             <BriefcaseBusiness size={16} /> Projects
             {savedProjects.length ? <b>{savedProjects.length}</b> : null}
