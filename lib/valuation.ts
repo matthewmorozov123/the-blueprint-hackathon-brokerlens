@@ -38,7 +38,6 @@ export type BusinessData = {
   ownerDependence: OwnerDependence;
   largestCustomer: number;
   leaseYears: number;
-  localGrowth: number;
   inventory: number;
   excessAssets: number;
   debtAssumed: number;
@@ -139,7 +138,6 @@ export const demoBusiness: BusinessData = {
   ownerDependence: "medium",
   largestCustomer: 7,
   leaseYears: 4,
-  localGrowth: 1.8,
   inventory: 62_000,
   excessAssets: 18_000,
   debtAssumed: 35_000,
@@ -248,26 +246,6 @@ export function calculateValuation(data: BusinessData): ValuationResult {
       label: "Lease stability",
       value: 0.08,
       explanation: "At least five years remain on the current lease.",
-    });
-  }
-
-  if (data.localGrowth >= 2) {
-    adjustments.push({
-      label: "Local market",
-      value: 0.15,
-      explanation: `${data.localGrowth}% local growth suggests a supportive market.`,
-    });
-  } else if (data.localGrowth >= 1) {
-    adjustments.push({
-      label: "Local market",
-      value: 0.06,
-      explanation: `${data.localGrowth}% local growth is a modest tailwind.`,
-    });
-  } else if (data.localGrowth < 0) {
-    adjustments.push({
-      label: "Local market",
-      value: -0.12,
-      explanation: `${data.localGrowth}% local contraction may reduce buyer demand.`,
     });
   }
 

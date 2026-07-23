@@ -626,9 +626,6 @@ export function BrokerLensApp() {
                   </div>
                 ) : null}
               </section>
-              <Field label="Local market growth" hint="Enter a verified figure now; live research can propose one for review." wide>
-                <PercentInput value={data.localGrowth} onChange={(value) => numberUpdate("localGrowth", value)} />
-              </Field>
               <button className="research-button" onClick={runResearch} disabled={researching}>
                 {researching ? <Loader2 className="spin" size={19} /> : <Search size={19} />}
                 <span><strong>{researching ? "Researching approved sources…" : "Run AI market research"}</strong><small>Find demand, labor, competition, and transaction signals</small></span>
