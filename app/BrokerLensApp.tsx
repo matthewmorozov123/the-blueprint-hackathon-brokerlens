@@ -168,6 +168,7 @@ export function BrokerLensApp() {
   const [savedProjects, setSavedProjects] = useState<SavedProject[]>([]);
   const [showProjects, setShowProjects] = useState(false);
   const [marketReport, setMarketReport] = useState<MarketReport>(demoSignals);
+  const [hasLiveResearch, setHasLiveResearch] = useState(false);
   const [researching, setResearching] = useState(false);
   const [researchNote, setResearchNote] = useState("");
   const [savedFlash, setSavedFlash] = useState(false);
@@ -286,9 +287,11 @@ export function BrokerLensApp() {
       const payload = (await response.json()) as MarketReport & { error?: string };
       if (!response.ok) throw new Error(payload.error || "Research unavailable");
       setMarketReport(payload);
+      setHasLiveResearch(true);
       setResearchNote("Live web research completed from approved sources.");
     } catch (error) {
       setMarketReport(demoSignals);
+      setHasLiveResearch(false);
       setResearchNote(
         error instanceof Error
           ? error.message
@@ -386,6 +389,7 @@ export function BrokerLensApp() {
               onClick={() => {
                 setData(demoBusiness);
                 setMarketReport(demoSignals);
+                setHasLiveResearch(false);
                 setShowGrowthCalculator(false);
                 setPreviousRevenue("");
                 setCurrentRevenue("");
@@ -632,10 +636,12 @@ export function BrokerLensApp() {
                 <ChevronRight size={18} />
               </button>
               {researchNote ? <p className="research-note"><Info size={14} /> {researchNote}</p> : null}
-              <div className="research-summary">
-                <Sparkles size={16} />
-                <p>{marketReport.summary}</p>
-              </div>
+              {hasLiveResearch ? (
+                <div className="research-summary">
+                  <Sparkles size={16} />
+                  <p>{marketReport.summary}</p>
+                </div>
+              ) : null}
               <div className="signal-list">
                 {marketReport.signals.map((signal) => (
                   <article className="signal-card" key={signal.title}>
@@ -744,7 +750,12 @@ export function BrokerLensApp() {
               <div className="project-list">
                 {savedProjects.map((project) => (
                   <article key={project.id}>
-                    <button className="project-main" onClick={() => { setData(project.data); setShowProjects(false); }}>
+                    <button className="project-main" onClick={() => {
+                      setData(project.data);
+                      setMarketReport(demoSignals);
+                      setHasLiveResearch(false);
+                      setShowProjects(false);
+                    }}>
                       <span className="project-icon"><BriefcaseBusiness size={18} /></span>
                       <span><strong>{project.name}</strong><small>{industryLabels[project.data.industry]} · {project.data.city}, {project.data.state}</small></span>
                       <b>{formatCurrency(calculateValuation(project.data).midpointValue)}</b>
