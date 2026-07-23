@@ -113,6 +113,16 @@ const baselines: Record<Industry, number> = {
   other: 2.9,
 };
 
+export const defaultResearchDomains = [
+  "census.gov",
+  "bea.gov",
+  "bls.gov",
+  "careeronestop.org",
+  "sizeup.com",
+  "bizbuysell.com",
+  "ibba.org",
+] as const;
+
 export const demoBusiness: BusinessData = {
   name: "Desert Air Mechanical",
   industry: "home_services",
@@ -133,7 +143,7 @@ export const demoBusiness: BusinessData = {
   inventory: 62_000,
   excessAssets: 18_000,
   debtAssumed: 35_000,
-  sourceDomains: "census.gov, bls.gov, bea.gov, bizbuysell.com",
+  sourceDomains: defaultResearchDomains.join(", "),
 };
 
 const roundTo = (value: number, increment = 5_000) =>

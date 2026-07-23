@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
-import { industryLabels, type BusinessData } from "@/lib/valuation";
+import {
+  defaultResearchDomains,
+  industryLabels,
+  type BusinessData,
+} from "@/lib/valuation";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -28,8 +32,6 @@ type OpenAIResponse = {
   output?: OpenAIOutput[];
   error?: { message?: string };
 };
-
-const defaultDomains = ["census.gov", "bls.gov", "bea.gov", "bizbuysell.com"];
 
 function cleanDomains(raw: string) {
   const values = raw
@@ -76,7 +78,9 @@ export async function POST(request: Request) {
   }
 
   const allowedDomains = cleanDomains(data.sourceDomains);
-  const domains = allowedDomains.length ? allowedDomains : defaultDomains;
+  const domains = allowedDomains.length
+    ? allowedDomains
+    : [...defaultResearchDomains];
   const prompt = `Research current market signals for a small business broker evaluating this company:
 
 Business: ${data.name || "Unnamed business"}

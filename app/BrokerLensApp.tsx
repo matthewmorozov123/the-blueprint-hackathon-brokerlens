@@ -26,6 +26,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   BusinessData,
   calculateValuation,
+  defaultResearchDomains,
   demoBusiness,
   formatCurrency,
   industryLabels,
@@ -47,6 +48,16 @@ type MarketReport = {
 };
 
 const STORAGE_KEY = "brokerlens.projects.v1";
+
+const sourceDescriptions: Record<string, string> = {
+  "census.gov": "Population & business data",
+  "bea.gov": "Regional income & growth",
+  "bls.gov": "Employment & wages",
+  "careeronestop.org": "Hiring outlook",
+  "sizeup.com": "Competition & density",
+  "bizbuysell.com": "Sales & market multiples",
+  "ibba.org": "Broker transaction trends",
+};
 
 const stages: { id: Stage; label: string; icon: typeof Building2 }[] = [
   { id: "business", label: "Business", icon: Building2 },
@@ -163,7 +174,13 @@ export function BrokerLensApp() {
   const [showGrowthCalculator, setShowGrowthCalculator] = useState(false);
   const [previousRevenue, setPreviousRevenue] = useState("");
   const [currentRevenue, setCurrentRevenue] = useState("");
+  const [newSource, setNewSource] = useState("");
+  const [sourceError, setSourceError] = useState("");
   const result = useMemo(() => calculateValuation(data), [data]);
+  const researchDomains = data.sourceDomains
+    .split(/[\s,;]+/)
+    .map((domain) => domain.trim().toLowerCase())
+    .filter(Boolean);
   const calculatedGrowth =
     previousRevenue !== "" &&
     currentRevenue !== "" &&
@@ -192,6 +209,49 @@ export function BrokerLensApp() {
 
   const numberUpdate = (key: keyof BusinessData, value: string) =>
     update(key, (Number(value) || 0) as never);
+
+  const addResearchSource = () => {
+    let domain = "";
+    try {
+      domain = new URL(
+        newSource.includes("://") ? newSource : `https://${newSource}`,
+      ).hostname
+        .toLowerCase()
+        .replace(/^www\./, "");
+    } catch {
+      setSourceError("Enter a valid website, such as example.com.");
+      return;
+    }
+
+    if (!/^(?:[a-z0-9-]+\.)+[a-z]{2,}$/i.test(domain)) {
+      setSourceError("Enter a valid website, such as example.com.");
+      return;
+    }
+    if (researchDomains.includes(domain)) {
+      setSourceError("That source is already included.");
+      return;
+    }
+    if (researchDomains.length >= 20) {
+      setSourceError("You can use up to 20 research sources.");
+      return;
+    }
+
+    update("sourceDomains", [...researchDomains, domain].join(", "));
+    setNewSource("");
+    setSourceError("");
+  };
+
+  const removeResearchSource = (domain: string) => {
+    if (researchDomains.length <= 1) {
+      setSourceError("Keep at least one research source.");
+      return;
+    }
+    update(
+      "sourceDomains",
+      researchDomains.filter((source) => source !== domain).join(", "),
+    );
+    setSourceError("");
+  };
 
   const saveProject = () => {
     const project: SavedProject = {
@@ -476,9 +536,64 @@ export function BrokerLensApp() {
 
           {stage === "market" ? (
             <div className="market-content">
-              <Field label="Approved research domains" hint="BrokerLens will restrict web research to these sources." wide>
-                <textarea rows={3} value={data.sourceDomains} onChange={(e) => update("sourceDomains", e.target.value)} placeholder="census.gov, bls.gov, your-industry-source.com" />
-              </Field>
+              <section className="research-sources" aria-labelledby="research-sources-title">
+                <div className="research-sources-heading">
+                  <div>
+                    <span id="research-sources-title" className="field-label">Research sources</span>
+                    <small>AI research is restricted to these websites.</small>
+                  </div>
+                  <button
+                    className="text-button"
+                    type="button"
+                    onClick={() => {
+                      update("sourceDomains", defaultResearchDomains.join(", "));
+                      setSourceError("");
+                    }}
+                  >
+                    <RotateCcw size={13} /> Restore defaults
+                  </button>
+                </div>
+                <div className="source-list">
+                  {researchDomains.map((domain) => (
+                    <article className="source-card" key={domain}>
+                      <Globe2 size={16} />
+                      <span>
+                        <strong>{domain}</strong>
+                        <small>{sourceDescriptions[domain] ?? "Custom research source"}</small>
+                      </span>
+                      <button
+                        type="button"
+                        aria-label={`Remove ${domain}`}
+                        title={`Remove ${domain}`}
+                        onClick={() => removeResearchSource(domain)}
+                      >
+                        <X size={13} />
+                      </button>
+                    </article>
+                  ))}
+                </div>
+                <form
+                  className="add-source"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    addResearchSource();
+                  }}
+                >
+                  <input
+                    value={newSource}
+                    aria-label="Add a research website"
+                    placeholder="Add a website, such as example.com"
+                    onChange={(event) => {
+                      setNewSource(event.target.value);
+                      setSourceError("");
+                    }}
+                  />
+                  <button className="button button-ghost" type="submit">
+                    <Plus size={14} /> Add source
+                  </button>
+                </form>
+                {sourceError ? <p className="source-error">{sourceError}</p> : null}
+              </section>
               <Field label="Local market growth" hint="Enter a verified figure now; live research can propose one for review." wide>
                 <PercentInput value={data.localGrowth} onChange={(value) => numberUpdate("localGrowth", value)} />
               </Field>
