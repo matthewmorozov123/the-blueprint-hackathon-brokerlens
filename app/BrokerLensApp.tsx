@@ -50,37 +50,14 @@ type MarketReport = {
 const STORAGE_KEY = "brokerlens.projects.v1";
 
 const sourceDescriptions: Record<string, string> = {
-  "census.gov": "Population & business data",
-  "bea.gov": "Regional income & growth",
-  "bls.gov": "Employment & wages",
-  "careeronestop.org": "Hiring outlook",
-  "sizeup.com": "Competition & density",
-  "bizbuysell.com": "Sales & market multiples",
-  "ibba.org": "Broker transaction trends",
+  "census.gov": "Local population, income, and business counts",
+  "bea.gov": "Regional income and economic growth",
+  "bls.gov": "Industry employment, wages, and establishment trends",
+  "careeronestop.org": "Local wage ranges and hiring outlook",
+  "sizeup.com": "Local competitors and business density",
+  "bizbuysell.com": "Small-business sales and market multiples",
+  "ibba.org": "Broker transaction trends and deal multiples",
 };
-
-const researchSourceCategories = [
-  {
-    id: "local-demand",
-    label: "Local population, income & demand",
-    domains: ["census.gov", "bea.gov"],
-  },
-  {
-    id: "labor",
-    label: "Employment, wages & hiring",
-    domains: ["bls.gov", "careeronestop.org"],
-  },
-  {
-    id: "competition",
-    label: "Competition & business density",
-    domains: ["census.gov", "sizeup.com"],
-  },
-  {
-    id: "transactions",
-    label: "Business sales & valuation multiples",
-    domains: ["bizbuysell.com", "ibba.org"],
-  },
-] as const;
 
 const stages: { id: Stage; label: string; icon: typeof Building2 }[] = [
   { id: "business", label: "Business", icon: Building2 },
@@ -199,37 +176,12 @@ export function BrokerLensApp() {
   const [currentRevenue, setCurrentRevenue] = useState("");
   const [newSource, setNewSource] = useState("");
   const [sourceError, setSourceError] = useState("");
-  const [openSourceCategory, setOpenSourceCategory] = useState<string | null>(
-    null,
-  );
+  const [showResearchSources, setShowResearchSources] = useState(false);
   const result = useMemo(() => calculateValuation(data), [data]);
   const researchDomains = data.sourceDomains
     .split(/[\s,;]+/)
     .map((domain) => domain.trim().toLowerCase())
     .filter(Boolean);
-  const customResearchDomains = researchDomains.filter(
-    (domain) =>
-      !defaultResearchDomains.some(
-        (defaultDomain) => defaultDomain === domain,
-      ),
-  );
-  const sourceGroups = [
-    ...researchSourceCategories.map((category) => ({
-      ...category,
-      domains: category.domains.filter((domain) =>
-        researchDomains.includes(domain),
-      ),
-    })),
-    ...(customResearchDomains.length
-      ? [
-          {
-            id: "additional",
-            label: "Additional custom research",
-            domains: customResearchDomains,
-          },
-        ]
-      : []),
-  ];
   const calculatedGrowth =
     previousRevenue !== "" &&
     currentRevenue !== "" &&
@@ -586,107 +538,93 @@ export function BrokerLensApp() {
           {stage === "market" ? (
             <div className="market-content">
               <section className="research-sources" aria-labelledby="research-sources-title">
-                <div className="research-sources-heading">
-                  <div>
-                    <span id="research-sources-title" className="field-label">Research sources</span>
-                    <small>AI research is restricted to these websites.</small>
-                  </div>
-                  <button
-                    className="text-button"
-                    type="button"
-                    onClick={() => {
-                      update("sourceDomains", defaultResearchDomains.join(", "));
-                      setSourceError("");
-                      setOpenSourceCategory(null);
-                    }}
-                  >
-                    <RotateCcw size={13} /> Restore defaults
-                  </button>
-                </div>
-                <div className="source-groups">
-                  {sourceGroups.map((group) => {
-                    const isOpen = openSourceCategory === group.id;
-                    return (
-                      <section className="source-group" key={group.id}>
-                        <button
-                          className="source-group-toggle"
-                          type="button"
-                          aria-expanded={isOpen}
-                          aria-controls={`source-group-${group.id}`}
-                          onClick={() =>
-                            setOpenSourceCategory(isOpen ? null : group.id)
-                          }
-                        >
-                          <span>
-                            <small>Research field</small>
-                            <strong>{group.label}</strong>
-                          </span>
-                          <span>
-                            {isOpen ? "Hide websites" : `View websites (${group.domains.length})`}
-                            <ChevronRight
-                              className={isOpen ? "toggle-chevron open" : "toggle-chevron"}
-                              size={14}
-                            />
-                          </span>
-                        </button>
-                        {isOpen ? (
-                          <div
-                            className="source-group-domains"
-                            id={`source-group-${group.id}`}
-                          >
-                            {group.domains.length ? (
-                              group.domains.map((domain) => (
-                                <article className="source-card" key={domain}>
-                                  <Globe2 size={16} />
-                                  <span>
-                                    <strong>{domain}</strong>
-                                    <small>
-                                      {sourceDescriptions[domain] ??
-                                        "Custom research source"}
-                                    </small>
-                                  </span>
-                                  <button
-                                    type="button"
-                                    aria-label={`Remove ${domain}`}
-                                    title={`Remove ${domain}`}
-                                    onClick={() => removeResearchSource(domain)}
-                                  >
-                                    <X size={13} />
-                                  </button>
-                                </article>
-                              ))
-                            ) : (
-                              <p className="source-group-empty">
-                                No active website for this research field. Add one below or restore defaults.
-                              </p>
-                            )}
-                          </div>
-                        ) : null}
-                      </section>
-                    );
-                  })}
-                </div>
-                <form
-                  className="add-source"
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    addResearchSource();
-                  }}
+                <button
+                  className="research-sources-toggle"
+                  type="button"
+                  aria-expanded={showResearchSources}
+                  aria-controls="research-sources-panel"
+                  onClick={() => setShowResearchSources((open) => !open)}
                 >
-                  <input
-                    value={newSource}
-                    aria-label="Add a research website"
-                    placeholder="Add a website, such as example.com"
-                    onChange={(event) => {
-                      setNewSource(event.target.value);
-                      setSourceError("");
-                    }}
-                  />
-                  <button className="button button-ghost" type="submit">
-                    <Plus size={14} /> Add source
-                  </button>
-                </form>
-                {sourceError ? <p className="source-error">{sourceError}</p> : null}
+                  <span>
+                    <small>AI market research</small>
+                    <strong id="research-sources-title">
+                      Research in local demand, labor, competition &amp; business sales
+                    </strong>
+                  </span>
+                  <span>
+                    {researchDomains.length} websites
+                    <ChevronRight
+                      className={showResearchSources ? "toggle-chevron open" : "toggle-chevron"}
+                      size={15}
+                    />
+                  </span>
+                </button>
+                {showResearchSources ? (
+                  <div className="research-sources-panel" id="research-sources-panel">
+                    <p>
+                      BrokerLens searches only these approved websites and uses each one for the purpose shown.
+                    </p>
+                    <div className="source-list">
+                      {researchDomains.map((domain) => (
+                        <article className="source-card" key={domain}>
+                          <Globe2 size={16} />
+                          <span>
+                            <strong>{domain}</strong>
+                            <small>
+                              {sourceDescriptions[domain] ??
+                                "Additional user-approved research"}
+                            </small>
+                          </span>
+                          <button
+                            type="button"
+                            aria-label={`Remove ${domain}`}
+                            title={`Remove ${domain}`}
+                            onClick={() => removeResearchSource(domain)}
+                          >
+                            <X size={13} />
+                          </button>
+                        </article>
+                      ))}
+                    </div>
+                    <form
+                      className="add-source"
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        addResearchSource();
+                      }}
+                    >
+                      <input
+                        value={newSource}
+                        aria-label="Add a research website"
+                        placeholder="Add a website, such as example.com"
+                        onChange={(event) => {
+                          setNewSource(event.target.value);
+                          setSourceError("");
+                        }}
+                      />
+                      <button className="button button-ghost" type="submit">
+                        <Plus size={14} /> Add source
+                      </button>
+                    </form>
+                    <div className="research-sources-footer">
+                      {sourceError ? (
+                        <p className="source-error">{sourceError}</p>
+                      ) : (
+                        <span />
+                      )}
+                      <button
+                        className="text-button"
+                        type="button"
+                        onClick={() => {
+                          update("sourceDomains", defaultResearchDomains.join(", "));
+                          setSourceError("");
+                        }}
+                      >
+                        <RotateCcw size={13} /> Restore defaults
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
               </section>
               <Field label="Local market growth" hint="Enter a verified figure now; live research can propose one for review." wide>
                 <PercentInput value={data.localGrowth} onChange={(value) => numberUpdate("localGrowth", value)} />
