@@ -82,7 +82,6 @@ export async function POST(request: Request) {
 Business: ${data.name || "Unnamed business"}
 Industry: ${data.industry}
 Location: ${data.city}, ${data.state}
-Description: ${data.description}
 
 Find concise, decision-relevant evidence on:
 1. Local population, income, establishment, or demand growth.

@@ -282,9 +282,6 @@ export function BrokerLensApp() {
               <Field label="State">
                 <input value={data.state} maxLength={2} onChange={(e) => update("state", e.target.value.toUpperCase())} />
               </Field>
-              <Field label="Business description" hint="Mention customers, services, history, and how the owner is involved." wide>
-                <textarea rows={5} value={data.description} onChange={(e) => update("description", e.target.value)} />
-              </Field>
             </div>
           ) : null}
 

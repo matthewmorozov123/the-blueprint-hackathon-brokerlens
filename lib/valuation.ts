@@ -13,7 +13,6 @@ export type BusinessData = {
   industry: Industry;
   city: string;
   state: string;
-  description: string;
   netProfit: number;
   ownerSalary: number;
   interest: number;
@@ -76,8 +75,6 @@ export const demoBusiness: BusinessData = {
   industry: "home_services",
   city: "Phoenix",
   state: "AZ",
-  description:
-    "Residential HVAC repair and replacement company serving the Phoenix metro. The company has a 12-year operating history, a mixed service/install team, and a growing maintenance plan base.",
   netProfit: 188_000,
   ownerSalary: 115_000,
   interest: 12_000,
@@ -242,7 +239,7 @@ export function calculateValuation(data: BusinessData): ValuationResult {
   const completeness = [
     data.name,
     data.city,
-    data.description,
+    data.industry,
     data.netProfit !== 0,
     data.sourceDomains,
   ].filter(Boolean).length;
