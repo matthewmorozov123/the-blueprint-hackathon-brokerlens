@@ -330,6 +330,19 @@ export function BrokerLensApp() {
                   {Object.entries(industryLabels).map(([value, label]) => <option value={value} key={value}>{label}</option>)}
                 </select>
               </Field>
+              {data.industry === "other" ? (
+                <Field
+                  label="Broad industry"
+                  hint="Enter a general industry category, not a detailed business description."
+                  wide
+                >
+                  <input
+                    value={data.customIndustry ?? ""}
+                    placeholder="For example: Roofing, laundromats, or printing"
+                    onChange={(e) => update("customIndustry", e.target.value)}
+                  />
+                </Field>
+              ) : null}
               <Field label="City">
                 <input value={data.city} onChange={(e) => update("city", e.target.value)} />
               </Field>

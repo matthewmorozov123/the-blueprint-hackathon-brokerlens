@@ -25,6 +25,7 @@ export type OwnerDependence = "low" | "medium" | "high";
 export type BusinessData = {
   name: string;
   industry: Industry;
+  customIndustry: string;
   city: string;
   state: string;
   netProfit: number;
@@ -115,6 +116,7 @@ const baselines: Record<Industry, number> = {
 export const demoBusiness: BusinessData = {
   name: "Desert Air Mechanical",
   industry: "home_services",
+  customIndustry: "",
   city: "Phoenix",
   state: "AZ",
   netProfit: 188_000,
@@ -281,7 +283,7 @@ export function calculateValuation(data: BusinessData): ValuationResult {
   const completeness = [
     data.name,
     data.city,
-    data.industry,
+    data.industry === "other" ? data.customIndustry?.trim() : data.industry,
     data.netProfit !== 0,
     data.sourceDomains,
   ].filter(Boolean).length;

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import type { BusinessData } from "@/lib/valuation";
+import { industryLabels, type BusinessData } from "@/lib/valuation";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -80,7 +80,11 @@ export async function POST(request: Request) {
   const prompt = `Research current market signals for a small business broker evaluating this company:
 
 Business: ${data.name || "Unnamed business"}
-Industry: ${data.industry}
+Industry: ${
+    data.industry === "other"
+      ? data.customIndustry?.trim() || "Other"
+      : industryLabels[data.industry]
+  }
 Location: ${data.city}, ${data.state}
 
 Find concise, decision-relevant evidence on:
