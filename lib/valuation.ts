@@ -4,6 +4,20 @@ export type Industry =
   | "restaurant"
   | "retail"
   | "manufacturing"
+  | "construction"
+  | "automotive"
+  | "healthcare"
+  | "beauty_personal_care"
+  | "fitness_recreation"
+  | "transportation_logistics"
+  | "hospitality"
+  | "education_childcare"
+  | "technology_software"
+  | "wholesale_distribution"
+  | "agriculture"
+  | "cleaning_maintenance"
+  | "real_estate_services"
+  | "pet_services"
   | "other";
 
 export type OwnerDependence = "low" | "medium" | "high";
@@ -58,6 +72,20 @@ export const industryLabels: Record<Industry, string> = {
   restaurant: "Restaurant & food",
   retail: "Retail",
   manufacturing: "Manufacturing",
+  construction: "Construction",
+  automotive: "Automotive",
+  healthcare: "Healthcare",
+  beauty_personal_care: "Beauty & personal care",
+  fitness_recreation: "Fitness & recreation",
+  transportation_logistics: "Transportation & logistics",
+  hospitality: "Hospitality",
+  education_childcare: "Education & childcare",
+  technology_software: "Technology & software",
+  wholesale_distribution: "Wholesale & distribution",
+  agriculture: "Agriculture",
+  cleaning_maintenance: "Cleaning & maintenance",
+  real_estate_services: "Real estate services",
+  pet_services: "Pet services",
   other: "Other",
 };
 
@@ -67,6 +95,20 @@ const baselines: Record<Industry, number> = {
   restaurant: 2.5,
   retail: 2.55,
   manufacturing: 3.7,
+  construction: 2.9,
+  automotive: 2.9,
+  healthcare: 2.9,
+  beauty_personal_care: 2.9,
+  fitness_recreation: 2.9,
+  transportation_logistics: 2.9,
+  hospitality: 2.9,
+  education_childcare: 2.9,
+  technology_software: 2.9,
+  wholesale_distribution: 2.9,
+  agriculture: 2.9,
+  cleaning_maintenance: 2.9,
+  real_estate_services: 2.9,
+  pet_services: 2.9,
   other: 2.9,
 };
 
