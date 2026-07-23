@@ -160,7 +160,18 @@ export function BrokerLensApp() {
   const [researching, setResearching] = useState(false);
   const [researchNote, setResearchNote] = useState("");
   const [savedFlash, setSavedFlash] = useState(false);
+  const [showGrowthCalculator, setShowGrowthCalculator] = useState(false);
+  const [previousRevenue, setPreviousRevenue] = useState("");
+  const [currentRevenue, setCurrentRevenue] = useState("");
   const result = useMemo(() => calculateValuation(data), [data]);
+  const calculatedGrowth =
+    previousRevenue !== "" &&
+    currentRevenue !== "" &&
+    Number(previousRevenue) > 0
+      ? ((Number(currentRevenue) - Number(previousRevenue)) /
+          Number(previousRevenue)) *
+        100
+      : null;
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -314,6 +325,9 @@ export function BrokerLensApp() {
               onClick={() => {
                 setData(demoBusiness);
                 setMarketReport(demoSignals);
+                setShowGrowthCalculator(false);
+                setPreviousRevenue("");
+                setCurrentRevenue("");
               }}
             >
               <RotateCcw size={14} /> Load demo
@@ -367,9 +381,63 @@ export function BrokerLensApp() {
               <MoneyField label="Interest expense" value={data.interest} onChange={(value) => numberUpdate("interest", value)} />
               <MoneyField label="Depreciation & amortization" value={data.depreciation} onChange={(value) => numberUpdate("depreciation", value)} />
               <MoneyField label="Verified one-time add-backs" value={data.oneTimeAddbacks} onChange={(value) => numberUpdate("oneTimeAddbacks", value)} />
-              <Field label="Annual revenue growth" hint="Most recent year over year">
+              <div className="field">
+                <div className="field-heading">
+                  <span className="field-label">Annual revenue growth</span>
+                  <button
+                    className="field-action"
+                    type="button"
+                    aria-expanded={showGrowthCalculator}
+                    onClick={() => setShowGrowthCalculator((open) => !open)}
+                  >
+                    Calculate
+                    <ChevronRight
+                      className={showGrowthCalculator ? "toggle-chevron open" : "toggle-chevron"}
+                      size={13}
+                    />
+                  </button>
+                </div>
                 <PercentInput value={data.growthRate} onChange={(value) => numberUpdate("growthRate", value)} />
-              </Field>
+                <small>Most recent year over year</small>
+              </div>
+              {showGrowthCalculator ? (
+                <div className="growth-calculator field-wide">
+                  <div className="growth-calculator-fields">
+                    <MoneyField
+                      label="Previous-year revenue"
+                      value={previousRevenue}
+                      onChange={setPreviousRevenue}
+                    />
+                    <MoneyField
+                      label="Current-year revenue"
+                      value={currentRevenue}
+                      onChange={setCurrentRevenue}
+                    />
+                  </div>
+                  <div className="growth-calculator-result">
+                    <span>
+                      <small>Calculated growth</small>
+                      <strong>
+                        {calculatedGrowth === null
+                          ? "Enter both amounts"
+                          : `${calculatedGrowth.toFixed(1)}%`}
+                      </strong>
+                    </span>
+                    <button
+                      className="button button-dark"
+                      type="button"
+                      disabled={calculatedGrowth === null}
+                      onClick={() => {
+                        if (calculatedGrowth === null) return;
+                        numberUpdate("growthRate", calculatedGrowth.toFixed(1));
+                        setShowGrowthCalculator(false);
+                      }}
+                    >
+                      Use this rate
+                    </button>
+                  </div>
+                </div>
+              ) : null}
               <div className="sde-card field-wide">
                 <span>Calculated SDE</span>
                 <strong>{formatCurrency(result.sde)}</strong>
@@ -551,7 +619,7 @@ export function BrokerLensApp() {
   );
 }
 
-function MoneyField({ label, value, onChange }: { label: string; value: number; onChange: (value: string) => void }) {
+function MoneyField({ label, value, onChange }: { label: string; value: number | string; onChange: (value: string) => void }) {
   return (
     <Field label={label}>
       <div className="input-affix"><span>$</span><input type="number" min="0" step="1000" value={value} onChange={(e) => onChange(e.target.value)} /></div>

@@ -229,6 +229,11 @@ html[data-theme="dark"] .theme-icon-sun { display: block; }
 .field { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
 .field-wide { grid-column: 1 / -1; }
 .field-label { font-size: 12px; font-weight: 680; color: #38413e; }
+.field-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.field-action { border: 0; background: none; color: var(--copper-dark); display: inline-flex; align-items: center; gap: 4px; padding: 0; font-size: 10px; font-weight: 720; cursor: pointer; }
+.field-action:hover { color: var(--copper); }
+.toggle-chevron { transition: transform .16s ease; }
+.toggle-chevron.open { transform: rotate(90deg); }
 .field small { font-size: 10px; line-height: 1.45; color: #858b88; }
 input, select, textarea {
   width: 100%;
@@ -249,6 +254,13 @@ select { cursor: pointer; }
 .input-affix input { border: 0; box-shadow: none !important; }
 .input-affix.suffix { grid-template-columns: 1fr 40px; }
 .input-affix.suffix span { border-right: 0; border-left: 1px solid #e4e0d7; }
+.growth-calculator { border: 1px solid var(--line); background: var(--paper); padding: 16px; display: grid; gap: 15px; }
+.growth-calculator-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.growth-calculator-result { border-top: 1px solid var(--line); padding-top: 13px; display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.growth-calculator-result > span { display: flex; flex-direction: column; gap: 3px; }
+.growth-calculator-result small { color: var(--muted); font-size: 9px; text-transform: uppercase; letter-spacing: .08em; }
+.growth-calculator-result strong { font-family: var(--font-geist-mono); font-size: 16px; }
+.growth-calculator-result .button:disabled { opacity: .45; cursor: not-allowed; }
 .section-note { display: flex; align-items: flex-start; gap: 10px; padding: 13px 14px; background: #edf3ef; color: #415c4d; font-size: 11px; line-height: 1.55; }
 .section-note svg { flex: 0 0 auto; margin-top: 1px; }
 .section-note strong { display: block; color: #31473b; }
@@ -394,6 +406,8 @@ html[data-theme="dark"] .project-main:hover {
   border-color: #3a4b47;
 }
 html[data-theme="dark"] .signal-card { background: #0f1a18; }
+html[data-theme="dark"] .growth-calculator { background: #101c1a; border-color: #33433f; }
+html[data-theme="dark"] .growth-calculator-result { border-color: #33433f; }
 html[data-theme="dark"] .section-note {
   background: #172922;
   color: #9db8a8;
@@ -429,6 +443,9 @@ html[data-theme="dark"] .icon-button:hover { background: #1a2926; }
   .panel-heading, .form-grid, .market-content { padding-left: 18px; padding-right: 18px; }
   .form-grid { grid-template-columns: 1fr; }
   .field-wide { grid-column: auto; }
+  .growth-calculator-fields { grid-template-columns: 1fr; }
+  .growth-calculator-result { align-items: stretch; flex-direction: column; }
+  .growth-calculator-result .button { width: 100%; }
   .panel-footer { padding: 13px 18px; }
   .panel-footer > span { display: none; }
   .panel-footer .button { width: 100%; }
