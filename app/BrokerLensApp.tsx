@@ -55,6 +55,60 @@ const stages: { id: Stage; label: string; icon: typeof Building2 }[] = [
   { id: "market", label: "Market", icon: Globe2 },
 ];
 
+const stateOptions = [
+  ["AL", "Alabama"],
+  ["AK", "Alaska"],
+  ["AZ", "Arizona"],
+  ["AR", "Arkansas"],
+  ["CA", "California"],
+  ["CO", "Colorado"],
+  ["CT", "Connecticut"],
+  ["DE", "Delaware"],
+  ["DC", "Washington, D.C."],
+  ["FL", "Florida"],
+  ["GA", "Georgia"],
+  ["HI", "Hawaii"],
+  ["ID", "Idaho"],
+  ["IL", "Illinois"],
+  ["IN", "Indiana"],
+  ["IA", "Iowa"],
+  ["KS", "Kansas"],
+  ["KY", "Kentucky"],
+  ["LA", "Louisiana"],
+  ["ME", "Maine"],
+  ["MD", "Maryland"],
+  ["MA", "Massachusetts"],
+  ["MI", "Michigan"],
+  ["MN", "Minnesota"],
+  ["MS", "Mississippi"],
+  ["MO", "Missouri"],
+  ["MT", "Montana"],
+  ["NE", "Nebraska"],
+  ["NV", "Nevada"],
+  ["NH", "New Hampshire"],
+  ["NJ", "New Jersey"],
+  ["NM", "New Mexico"],
+  ["NY", "New York"],
+  ["NC", "North Carolina"],
+  ["ND", "North Dakota"],
+  ["OH", "Ohio"],
+  ["OK", "Oklahoma"],
+  ["OR", "Oregon"],
+  ["PA", "Pennsylvania"],
+  ["RI", "Rhode Island"],
+  ["SC", "South Carolina"],
+  ["SD", "South Dakota"],
+  ["TN", "Tennessee"],
+  ["TX", "Texas"],
+  ["UT", "Utah"],
+  ["VT", "Vermont"],
+  ["VA", "Virginia"],
+  ["WA", "Washington"],
+  ["WV", "West Virginia"],
+  ["WI", "Wisconsin"],
+  ["WY", "Wyoming"],
+] as const;
+
 const demoSignals: MarketReport = {
   summary:
     "Connect an OpenAI API key to research current market conditions from your approved domains. The valuation model below is already live and uses the operating inputs you confirm.",
@@ -280,7 +334,11 @@ export function BrokerLensApp() {
                 <input value={data.city} onChange={(e) => update("city", e.target.value)} />
               </Field>
               <Field label="State">
-                <input value={data.state} maxLength={2} onChange={(e) => update("state", e.target.value.toUpperCase())} />
+                <select value={data.state} onChange={(e) => update("state", e.target.value)}>
+                  {stateOptions.map(([code, name]) => (
+                    <option value={code} key={code}>{name} ({code})</option>
+                  ))}
+                </select>
               </Field>
             </div>
           ) : null}
