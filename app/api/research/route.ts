@@ -83,9 +83,6 @@ Business: ${data.name || "Unnamed business"}
 Industry: ${data.industry}
 Location: ${data.city}, ${data.state}
 Description: ${data.description}
-Employees: ${data.employees}
-Revenue: ${data.revenue}
-Payroll: ${data.payroll}
 
 Find concise, decision-relevant evidence on:
 1. Local population, income, establishment, or demand growth.

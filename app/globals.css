@@ -249,14 +249,6 @@ select { cursor: pointer; }
 .input-affix input { border: 0; box-shadow: none !important; }
 .input-affix.suffix { grid-template-columns: 1fr 40px; }
 .input-affix.suffix span { border-right: 0; border-left: 1px solid #e4e0d7; }
-.upload-box { border: 1px dashed #c9c2b7; background: #faf7f1; padding: 6px; }
-.upload-box > input { position: absolute; width: 1px; height: 1px; opacity: 0; }
-.upload-box > label { min-height: 70px; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 13px; padding: 7px 9px; cursor: pointer; }
-.upload-icon { width: 39px; height: 39px; display: grid; place-items: center; background: var(--copper-pale); color: var(--copper-dark); }
-.upload-box label > span:nth-child(2) { display: flex; flex-direction: column; gap: 4px; font-size: 12px; }
-.upload-box label small { color: var(--muted); }
-.file-list { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 8px 8px 60px; }
-.file-list span { display: inline-flex; align-items: center; gap: 5px; background: white; border: 1px solid var(--line); padding: 5px 8px; font-size: 10px; color: var(--muted); }
 .section-note { display: flex; align-items: flex-start; gap: 10px; padding: 13px 14px; background: #edf3ef; color: #415c4d; font-size: 11px; line-height: 1.55; }
 .section-note svg { flex: 0 0 auto; margin-top: 1px; }
 .section-note strong { display: block; color: #31473b; }
@@ -383,8 +375,7 @@ html[data-theme="dark"] .stage.active .stage-number {
   color: #111d1b;
 }
 html[data-theme="dark"] .field-label { color: #c9d1cd; }
-html[data-theme="dark"] .field small,
-html[data-theme="dark"] .upload-box label small { color: #86958f; }
+html[data-theme="dark"] .field small { color: #86958f; }
 html[data-theme="dark"] input,
 html[data-theme="dark"] select,
 html[data-theme="dark"] textarea,
@@ -397,13 +388,11 @@ html[data-theme="dark"] .input-affix span {
   border-color: #33433f;
   color: #94a19c;
 }
-html[data-theme="dark"] .upload-box,
 html[data-theme="dark"] .research-summary,
 html[data-theme="dark"] .project-main:hover {
   background: #15221f;
   border-color: #3a4b47;
 }
-html[data-theme="dark"] .file-list span,
 html[data-theme="dark"] .signal-card { background: #0f1a18; }
 html[data-theme="dark"] .section-note {
   background: #172922;
@@ -440,10 +429,6 @@ html[data-theme="dark"] .icon-button:hover { background: #1a2926; }
   .panel-heading, .form-grid, .market-content { padding-left: 18px; padding-right: 18px; }
   .form-grid { grid-template-columns: 1fr; }
   .field-wide { grid-column: auto; }
-  .upload-box { grid-column: auto; }
-  .upload-box > label { grid-template-columns: auto 1fr; }
-  .upload-box label .button { display: none; }
-  .file-list { padding-left: 8px; }
   .panel-footer { padding: 13px 18px; }
   .panel-footer > span { display: none; }
   .panel-footer .button { width: 100%; }

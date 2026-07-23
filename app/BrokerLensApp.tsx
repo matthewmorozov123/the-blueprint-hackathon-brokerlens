@@ -7,7 +7,6 @@ import {
   Check,
   ChevronRight,
   CircleDollarSign,
-  FileSpreadsheet,
   Globe2,
   Info,
   Landmark,
@@ -21,7 +20,6 @@ import {
   ShieldCheck,
   Sparkles,
   Sun,
-  Upload,
   X,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -104,7 +102,6 @@ export function BrokerLensApp() {
   const [stage, setStage] = useState<Stage>("business");
   const [savedProjects, setSavedProjects] = useState<SavedProject[]>([]);
   const [showProjects, setShowProjects] = useState(false);
-  const [attachedFiles, setAttachedFiles] = useState<string[]>([]);
   const [marketReport, setMarketReport] = useState<MarketReport>(demoSignals);
   const [researching, setResearching] = useState(false);
   const [researchNote, setResearchNote] = useState("");
@@ -262,7 +259,6 @@ export function BrokerLensApp() {
               className="text-button"
               onClick={() => {
                 setData(demoBusiness);
-                setAttachedFiles([]);
                 setMarketReport(demoSignals);
               }}
             >
@@ -275,13 +271,10 @@ export function BrokerLensApp() {
               <Field label="Business name" wide>
                 <input value={data.name} onChange={(e) => update("name", e.target.value)} />
               </Field>
-              <Field label="Industry">
+              <Field label="Industry" wide>
                 <select value={data.industry} onChange={(e) => update("industry", e.target.value as BusinessData["industry"])}>
                   {Object.entries(industryLabels).map(([value, label]) => <option value={value} key={value}>{label}</option>)}
                 </select>
-              </Field>
-              <Field label="Employees">
-                <input type="number" min="0" value={data.employees} onChange={(e) => numberUpdate("employees", e.target.value)} />
               </Field>
               <Field label="City">
                 <input value={data.city} onChange={(e) => update("city", e.target.value)} />
@@ -292,25 +285,6 @@ export function BrokerLensApp() {
               <Field label="Business description" hint="Mention customers, services, history, and how the owner is involved." wide>
                 <textarea rows={5} value={data.description} onChange={(e) => update("description", e.target.value)} />
               </Field>
-              <div className="upload-box field-wide">
-                <input
-                  id="file-upload"
-                  type="file"
-                  multiple
-                  accept=".pdf,.csv,.xlsx,.xls,.txt"
-                  onChange={(e) => setAttachedFiles(Array.from(e.target.files ?? []).map((file) => file.name))}
-                />
-                <label htmlFor="file-upload">
-                  <span className="upload-icon"><Upload size={19} /></span>
-                  <span><strong>Attach financials</strong><small>PDF, CSV, XLSX or TXT · MVP records filenames for review</small></span>
-                  <span className="button button-ghost">Choose files</span>
-                </label>
-                {attachedFiles.length ? (
-                  <div className="file-list">
-                    {attachedFiles.map((file) => <span key={file}><FileSpreadsheet size={14} /> {file}</span>)}
-                  </div>
-                ) : null}
-              </div>
             </div>
           ) : null}
 
@@ -320,13 +294,11 @@ export function BrokerLensApp() {
                 <Info size={17} />
                 <span><strong>BrokerLens calculates Seller’s Discretionary Earnings (SDE).</strong> Confirm each add-back so the buyer can reproduce the calculation.</span>
               </div>
-              <MoneyField label="Annual revenue" value={data.revenue} onChange={(value) => numberUpdate("revenue", value)} />
               <MoneyField label="Net profit" value={data.netProfit} onChange={(value) => numberUpdate("netProfit", value)} />
               <MoneyField label="Owner salary" value={data.ownerSalary} onChange={(value) => numberUpdate("ownerSalary", value)} />
               <MoneyField label="Interest expense" value={data.interest} onChange={(value) => numberUpdate("interest", value)} />
               <MoneyField label="Depreciation & amortization" value={data.depreciation} onChange={(value) => numberUpdate("depreciation", value)} />
               <MoneyField label="Verified one-time add-backs" value={data.oneTimeAddbacks} onChange={(value) => numberUpdate("oneTimeAddbacks", value)} />
-              <MoneyField label="Total annual payroll" value={data.payroll} onChange={(value) => numberUpdate("payroll", value)} />
               <Field label="Annual revenue growth" hint="Most recent year over year">
                 <PercentInput value={data.growthRate} onChange={(value) => numberUpdate("growthRate", value)} />
               </Field>

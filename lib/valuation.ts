@@ -14,14 +14,11 @@ export type BusinessData = {
   city: string;
   state: string;
   description: string;
-  employees: number;
-  revenue: number;
   netProfit: number;
   ownerSalary: number;
   interest: number;
   depreciation: number;
   oneTimeAddbacks: number;
-  payroll: number;
   growthRate: number;
   recurringRevenue: number;
   ownerDependence: OwnerDependence;
@@ -81,14 +78,11 @@ export const demoBusiness: BusinessData = {
   state: "AZ",
   description:
     "Residential HVAC repair and replacement company serving the Phoenix metro. The company has a 12-year operating history, a mixed service/install team, and a growing maintenance plan base.",
-  employees: 9,
-  revenue: 1_480_000,
   netProfit: 188_000,
   ownerSalary: 115_000,
   interest: 12_000,
   depreciation: 28_000,
   oneTimeAddbacks: 22_000,
-  payroll: 498_000,
   growthRate: 11,
   recurringRevenue: 24,
   ownerDependence: "medium",
@@ -249,10 +243,7 @@ export function calculateValuation(data: BusinessData): ValuationResult {
     data.name,
     data.city,
     data.description,
-    data.revenue > 0,
     data.netProfit !== 0,
-    data.employees > 0,
-    data.payroll > 0,
     data.sourceDomains,
   ].filter(Boolean).length;
 
@@ -269,7 +260,7 @@ export function calculateValuation(data: BusinessData): ValuationResult {
     likelySaleLow: roundTo(lowValue * 1.02),
     likelySaleHigh: roundTo(midpointValue * 1.03),
     adjustments,
-    confidence: clamp(46 + completeness * 5, 46, 86),
+    confidence: clamp(56 + completeness * 6, 56, 86),
   };
 }
 
@@ -280,4 +271,3 @@ export function formatCurrency(value: number) {
     maximumFractionDigits: 0,
   }).format(value || 0);
 }
-
