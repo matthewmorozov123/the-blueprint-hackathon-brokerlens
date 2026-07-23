@@ -338,7 +338,7 @@ export function BrokerLensApp() {
                 >
                   <input
                     value={data.customIndustry ?? ""}
-                    placeholder="For example: Roofing, laundromats, or printing"
+                    placeholder="Enter the closest broad industry category."
                     onChange={(e) => update("customIndustry", e.target.value)}
                   />
                 </Field>
