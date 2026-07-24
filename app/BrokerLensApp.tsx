@@ -12,6 +12,7 @@ import {
   Landmark,
   LineChart,
   Loader2,
+  LockKeyhole,
   Moon,
   Plus,
   RotateCcw,
@@ -22,14 +23,13 @@ import {
   Sun,
   X,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   BusinessData,
   calculateValuation,
   defaultResearchDomains,
   demoBusiness,
   formatCurrency,
-  industryBaselines,
   industryLabels,
   type SupportedIndustry,
 } from "@/lib/valuation";
@@ -45,7 +45,14 @@ type SavedProject = {
 
 type MarketReport = {
   summary: string;
-  signals: { title: string; finding: string; source?: string }[];
+  marketAdjustment: number;
+  signals: {
+    category: string;
+    title: string;
+    finding: string;
+    source?: string;
+    adjustment: number;
+  }[];
   citations?: { title: string; url: string }[];
 };
 
@@ -131,22 +138,29 @@ const stateOptions = [
 
 const demoSignals: MarketReport = {
   summary:
-    "Connect an OpenAI API key to research current market conditions from your approved domains. The valuation model below is already live and uses the operating inputs you confirm.",
+    "Run AI market research to unlock the valuation and its evidence-backed market adjustment.",
+  marketAdjustment: 0,
   signals: [
     {
+      category: "local_demand",
       title: "Local demand",
       finding: "Use Census and BEA data to measure population, income, and establishment growth.",
       source: "census.gov · bea.gov",
+      adjustment: 0,
     },
     {
+      category: "labor",
       title: "Labor pressure",
       finding: "Use QCEW wage and employment data to test payroll and hiring risk.",
       source: "bls.gov",
+      adjustment: 0,
     },
     {
+      category: "industry_transactions",
       title: "Transaction evidence",
       finding: "Compare the earnings multiple against closed and listed businesses.",
       source: "bizbuysell.com",
+      adjustment: 0,
     },
   ],
 };
@@ -189,7 +203,15 @@ export function BrokerLensApp() {
   const [showResearchSources, setShowResearchSources] = useState(false);
   const [matchingIndustry, setMatchingIndustry] = useState(false);
   const [industryMatchNote, setIndustryMatchNote] = useState("");
-  const result = useMemo(() => calculateValuation(data), [data]);
+  const inputRevision = useRef(0);
+  const result = useMemo(
+    () =>
+      calculateValuation(
+        data,
+        hasLiveResearch ? marketReport.marketAdjustment : 0,
+      ),
+    [data, hasLiveResearch, marketReport.marketAdjustment],
+  );
   const researchDomains = data.sourceDomains
     .split(/[\s,;]+/)
     .map((domain) => domain.trim().toLowerCase())
@@ -215,10 +237,19 @@ export function BrokerLensApp() {
     return () => window.clearTimeout(timer);
   }, []);
 
+  const invalidateResearch = () => {
+    inputRevision.current += 1;
+    setHasLiveResearch(false);
+    setResearchNote("");
+  };
+
   const update = <K extends keyof BusinessData>(
     key: K,
     value: BusinessData[K],
-  ) => setData((current) => ({ ...current, [key]: value }));
+  ) => {
+    invalidateResearch();
+    setData((current) => ({ ...current, [key]: value }));
+  };
 
   const numberUpdate = (key: keyof BusinessData, value: string) =>
     update(key, (Number(value) || 0) as never);
@@ -316,6 +347,7 @@ export function BrokerLensApp() {
   };
 
   const matchCustomIndustry = async () => {
+    invalidateResearch();
     setIndustryMatchNote("");
     try {
       await requestIndustryMatch();
@@ -328,7 +360,9 @@ export function BrokerLensApp() {
 
   const runResearch = async () => {
     setResearching(true);
+    setHasLiveResearch(false);
     setResearchNote("");
+    const startingRevision = inputRevision.current;
     try {
       let researchData = data;
       if (data.industry === "other") {
@@ -344,6 +378,11 @@ export function BrokerLensApp() {
       });
       const payload = (await response.json()) as MarketReport & { error?: string };
       if (!response.ok) throw new Error(payload.error || "Research unavailable");
+      if (inputRevision.current !== startingRevision) {
+        throw new Error(
+          "Inputs changed during research. Run it again with the updated details.",
+        );
+      }
       setMarketReport(payload);
       setHasLiveResearch(true);
       setResearchNote("Live web research completed from approved sources.");
@@ -353,7 +392,7 @@ export function BrokerLensApp() {
       setResearchNote(
         error instanceof Error
           ? error.message
-          : "Research is unavailable. The valuation math is still active.",
+          : "Research is unavailable. Results remain locked until it completes.",
       );
     } finally {
       setResearching(false);
@@ -445,9 +484,9 @@ export function BrokerLensApp() {
             <button
               className="text-button"
               onClick={() => {
+                invalidateResearch();
                 setData(demoBusiness);
                 setMarketReport(demoSignals);
-                setHasLiveResearch(false);
                 setShowGrowthCalculator(false);
                 setPreviousRevenue("");
                 setCurrentRevenue("");
@@ -466,6 +505,7 @@ export function BrokerLensApp() {
                 <select
                   value={data.industry}
                   onChange={(e) => {
+                    invalidateResearch();
                     setData((current) => ({
                       ...current,
                       industry: e.target.value as BusinessData["industry"],
@@ -487,6 +527,7 @@ export function BrokerLensApp() {
                     value={data.customIndustry ?? ""}
                     placeholder="Enter the closest broad industry category."
                     onChange={(e) => {
+                      invalidateResearch();
                       const customIndustry = e.target.value;
                       setData((current) => ({
                         ...current,
@@ -516,8 +557,9 @@ export function BrokerLensApp() {
                     </button>
                     {data.matchedIndustry ? (
                       <span className="industry-match-result">
-                        Using <strong>{industryLabels[data.matchedIndustry]}</strong>{" "}
-                        at {industryBaselines[data.matchedIndustry].toFixed(2)}×
+                        Matched to{" "}
+                        <strong>{industryLabels[data.matchedIndustry]}</strong>{" "}
+                        for research
                       </span>
                     ) : null}
                     {industryMatchNote ? <small>{industryMatchNote}</small> : null}
@@ -635,8 +677,14 @@ export function BrokerLensApp() {
               <MoneyField label="Excess / non-operating assets" value={data.excessAssets} onChange={(value) => numberUpdate("excessAssets", value)} />
               <MoneyField label="Debt assumed by buyer" value={data.debtAssumed} onChange={(value) => numberUpdate("debtAssumed", value)} />
               <div className="risk-preview field-wide">
-                <div><ShieldCheck size={19} /><span><strong>{result.adjustments.length} adjustments</strong><small>Applied to the industry starting multiple</small></span></div>
-                <span className="multiple-pill">{result.baseMultiple.toFixed(2)}× → {result.adjustedMultiple.toFixed(2)}×</span>
+                <div>
+                  <ShieldCheck size={19} />
+                  <span>
+                    <strong>{result.adjustments.length} quality factors identified</strong>
+                    <small>Their multiplier impact unlocks after AI market research</small>
+                  </span>
+                </div>
+                <span className="multiple-pill">Base {result.baseMultiple.toFixed(2)}×</span>
               </div>
             </div>
           ) : null}
@@ -744,16 +792,42 @@ export function BrokerLensApp() {
                   <p>{marketReport.summary}</p>
                 </div>
               ) : null}
-              <div className="signal-list">
-                {marketReport.signals.map((signal) => (
-                  <article className="signal-card" key={signal.title}>
-                    <div><Landmark size={17} /><strong>{signal.title}</strong></div>
-                    <p>{signal.finding}</p>
-                    {signal.source ? <span>{signal.source}</span> : null}
-                  </article>
-                ))}
-              </div>
-              {marketReport.citations?.length ? (
+              {hasLiveResearch ? (
+                <div className="signal-list">
+                  {marketReport.signals.map((signal) => (
+                    <article className="signal-card" key={signal.category}>
+                      <div>
+                        <Landmark size={17} />
+                        <strong>{signal.title}</strong>
+                        <b
+                          className={
+                            signal.adjustment >= 0
+                              ? "positive-text"
+                              : "negative-text"
+                          }
+                        >
+                          {signal.adjustment >= 0 ? "+" : ""}
+                          {signal.adjustment.toFixed(2)}×
+                        </b>
+                      </div>
+                      <p>{signal.finding}</p>
+                      {signal.source ? <span>{signal.source}</span> : null}
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <div className="research-pending">
+                  <LockKeyhole size={18} />
+                  <span>
+                    <strong>Valuation results are locked</strong>
+                    <small>
+                      Research must finish successfully before BrokerLens reveals
+                      the multiplier and price.
+                    </small>
+                  </span>
+                </div>
+              )}
+              {hasLiveResearch && marketReport.citations?.length ? (
                 <div className="citations">
                   <span>Sources</span>
                   {marketReport.citations.map((citation) => (
@@ -765,7 +839,11 @@ export function BrokerLensApp() {
           ) : null}
 
           <div className="panel-footer">
-            <span>Changes recalculate instantly</span>
+            <span>
+              {hasLiveResearch
+                ? "Research is current for these inputs"
+                : "Final results unlock after market research"}
+            </span>
             {currentStage < stages.length - 1 ? (
               <button className="button button-copper" onClick={nextStage}>
                 Continue to {stages[currentStage + 1].label} <ChevronRight size={16} />
@@ -780,56 +858,123 @@ export function BrokerLensApp() {
 
         <aside className="result-panel">
           <div className="result-topline">
-            <span><span className="live-dot" /> Live valuation</span>
-            <span className="confidence">{result.confidence}% confidence</span>
-          </div>
-          <div className="value-hero">
-            <span>Estimated market value</span>
-            <strong>{formatCurrency(result.lowValue)} <i>–</i> {formatCurrency(result.highValue)}</strong>
-            <small>Preliminary range · asset sale basis</small>
-          </div>
-          <div className="deal-prices">
-            <div>
-              <span>Suggested asking price</span>
-              <strong>{formatCurrency(result.askingPrice)}</strong>
-              <small>Includes negotiation room</small>
-            </div>
-            <div>
-              <span>Likely sale range</span>
-              <strong>{formatCurrency(result.likelySaleLow)}–{formatCurrency(result.likelySaleHigh)}</strong>
-              <small>Before fees and taxes</small>
-            </div>
+            <span>
+              <span className={hasLiveResearch ? "live-dot" : "locked-dot"} />
+              {hasLiveResearch ? "Research-backed valuation" : "Valuation locked"}
+            </span>
+            {hasLiveResearch ? (
+              <span className="confidence">{result.confidence}% confidence</span>
+            ) : (
+              <span className="confidence">Base only</span>
+            )}
           </div>
 
-          <div className="valuation-math">
-            <div className="result-section-heading">
-              <span>Valuation bridge</span>
-              <BarChart3 size={17} />
-            </div>
-            <div className="math-row"><span>Normalized SDE</span><strong>{formatCurrency(result.sde)}</strong></div>
-            <div className="math-row">
-              <span>{industryLabels[result.valuationIndustry]} starting multiple</span>
-              <strong>{result.baseMultiple.toFixed(2)}×</strong>
-            </div>
-            <div className="math-row accent"><span>Risk-adjusted multiple</span><strong>{result.adjustedMultiple.toFixed(2)}×</strong></div>
-            <div className="range-bar" aria-label={`Multiple range ${result.lowMultiple.toFixed(2)} to ${result.highMultiple.toFixed(2)}`}>
-              <span style={{ left: "14%" }} />
-              <span className="range-mid" style={{ left: "50%" }} />
-              <span style={{ left: "86%" }} />
-            </div>
-            <div className="range-labels"><span>{result.lowMultiple.toFixed(2)}×</span><span>{result.adjustedMultiple.toFixed(2)}×</span><span>{result.highMultiple.toFixed(2)}×</span></div>
-          </div>
-
-          <div className="adjustment-list">
-            <div className="result-section-heading"><span>Why the multiple moved</span><Info size={16} /></div>
-            {result.adjustments.map((item) => (
-              <div className="adjustment" key={`${item.label}-${item.value}`}>
-                <span className={item.value >= 0 ? "adjustment-icon positive" : "adjustment-icon negative"}>{item.value >= 0 ? "+" : "−"}</span>
-                <div><strong>{item.label}</strong><small>{item.explanation}</small></div>
-                <b className={item.value >= 0 ? "positive-text" : "negative-text"}>{item.value >= 0 ? "+" : ""}{item.value.toFixed(2)}×</b>
+          {hasLiveResearch ? (
+            <>
+              <div className="value-hero">
+                <span>Estimated market value</span>
+                <strong>{formatCurrency(result.lowValue)} <i>–</i> {formatCurrency(result.highValue)}</strong>
+                <small>Preliminary range · asset sale basis</small>
               </div>
-            ))}
-          </div>
+              <div className="deal-prices">
+                <div>
+                  <span>Suggested asking price</span>
+                  <strong>{formatCurrency(result.askingPrice)}</strong>
+                  <small>Includes negotiation room</small>
+                </div>
+                <div>
+                  <span>Likely sale range</span>
+                  <strong>{formatCurrency(result.likelySaleLow)}–{formatCurrency(result.likelySaleHigh)}</strong>
+                  <small>Before fees and taxes</small>
+                </div>
+              </div>
+
+              <div className="valuation-math">
+                <div className="result-section-heading">
+                  <span>Valuation bridge</span>
+                  <BarChart3 size={17} />
+                </div>
+                <div className="math-row"><span>Normalized SDE</span><strong>{formatCurrency(result.sde)}</strong></div>
+                <div className="math-row"><span>Universal base multiple</span><strong>{result.baseMultiple.toFixed(2)}×</strong></div>
+                <div className="math-row">
+                  <span>Business-quality adjustment</span>
+                  <strong className={result.businessAdjustment >= 0 ? "positive-text" : "negative-text"}>
+                    {result.businessAdjustment >= 0 ? "+" : ""}
+                    {result.businessAdjustment.toFixed(2)}×
+                  </strong>
+                </div>
+                <div className="math-row">
+                  <span>AI market adjustment</span>
+                  <strong className={result.marketAdjustment >= 0 ? "positive-text" : "negative-text"}>
+                    {result.marketAdjustment >= 0 ? "+" : ""}
+                    {result.marketAdjustment.toFixed(2)}×
+                  </strong>
+                </div>
+                <div className="math-row accent"><span>Final multiple</span><strong>{result.adjustedMultiple.toFixed(2)}×</strong></div>
+                <div className="range-bar" aria-label={`Multiple range ${result.lowMultiple.toFixed(2)} to ${result.highMultiple.toFixed(2)}`}>
+                  <span style={{ left: "14%" }} />
+                  <span className="range-mid" style={{ left: "50%" }} />
+                  <span style={{ left: "86%" }} />
+                </div>
+                <div className="range-labels"><span>{result.lowMultiple.toFixed(2)}×</span><span>{result.adjustedMultiple.toFixed(2)}×</span><span>{result.highMultiple.toFixed(2)}×</span></div>
+              </div>
+
+              <div className="adjustment-list">
+                <div className="result-section-heading"><span>Why the multiple moved</span><Info size={16} /></div>
+                <span className="adjustment-group-label">Business quality</span>
+                {result.adjustments.map((item) => (
+                  <div className="adjustment" key={`${item.label}-${item.value}`}>
+                    <span className={item.value >= 0 ? "adjustment-icon positive" : "adjustment-icon negative"}>{item.value >= 0 ? "+" : "−"}</span>
+                    <div><strong>{item.label}</strong><small>{item.explanation}</small></div>
+                    <b className={item.value >= 0 ? "positive-text" : "negative-text"}>{item.value >= 0 ? "+" : ""}{item.value.toFixed(2)}×</b>
+                  </div>
+                ))}
+                <span className="adjustment-group-label market-label">AI market research</span>
+                {marketReport.signals.map((signal) => (
+                  <div className="adjustment" key={`market-${signal.category}`}>
+                    <span className={signal.adjustment >= 0 ? "adjustment-icon positive" : "adjustment-icon negative"}>
+                      {signal.adjustment >= 0 ? "+" : "−"}
+                    </span>
+                    <div><strong>{signal.title}</strong><small>{signal.finding}</small></div>
+                    <b className={signal.adjustment >= 0 ? "positive-text" : "negative-text"}>
+                      {signal.adjustment >= 0 ? "+" : ""}
+                      {signal.adjustment.toFixed(2)}×
+                    </b>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="locked-valuation">
+              <div className="locked-base">
+                <span>Universal base multiple</span>
+                <strong>{result.baseMultiple.toFixed(2)}×</strong>
+                <small>Same starting point for every industry</small>
+              </div>
+              <div className="locked-sde">
+                <span>Normalized SDE</span>
+                <strong>{formatCurrency(result.sde)}</strong>
+              </div>
+              <div className="locked-message">
+                <span><LockKeyhole size={22} /></span>
+                <div>
+                  <strong>Run market research to unlock the estimate</strong>
+                  <p>
+                    BrokerLens will evaluate transaction evidence, local demand,
+                    labor, and competition before revealing the final multiple
+                    and valuation.
+                  </p>
+                </div>
+              </div>
+              <button
+                className="button button-copper locked-action"
+                type="button"
+                onClick={() => setStage("market")}
+              >
+                Go to AI market research <ChevronRight size={16} />
+              </button>
+            </div>
+          )}
 
           <div className="disclaimer">
             <Info size={15} />
@@ -856,18 +1001,18 @@ export function BrokerLensApp() {
                 {savedProjects.map((project) => (
                   <article key={project.id}>
                     <button className="project-main" onClick={() => {
+                      invalidateResearch();
                       setData({
                         ...project.data,
                         matchedIndustry: project.data.matchedIndustry ?? null,
                       });
                       setIndustryMatchNote("");
                       setMarketReport(demoSignals);
-                      setHasLiveResearch(false);
                       setShowProjects(false);
                     }}>
                       <span className="project-icon"><BriefcaseBusiness size={18} /></span>
                       <span><strong>{project.name}</strong><small>{industryLabels[project.data.industry]} · {project.data.city}, {project.data.state}</small></span>
-                      <b>{formatCurrency(calculateValuation(project.data).midpointValue)}</b>
+                      <b>Research required</b>
                     </button>
                     <button className="icon-button delete" onClick={() => deleteProject(project.id)} aria-label={`Delete ${project.name}`}><X size={16} /></button>
                   </article>
