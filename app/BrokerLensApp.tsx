@@ -174,6 +174,32 @@ function shortSourceUrl(value: string) {
   }
 }
 
+function cleanResearchFinding(value: string) {
+  return value
+    .replace(/\s*\(\[[^\]]+\]\(https?:\/\/[^)]+\)\)\.?/gi, "")
+    .replace(/\s*\[[^\]]+\]\(https?:\/\/[^)]+\)\.?/gi, "")
+    .replace(/\s*\(https?:\/\/[^)]+\)\.?/gi, "")
+    .replace(/\s+https?:\/\/\S+/gi, "")
+    .trim();
+}
+
+function findSignalCitation(
+  signal: MarketReport["signals"][number],
+  citations: MarketReport["citations"] = [],
+) {
+  const evidenceText = `${signal.source ?? ""} ${signal.finding}`.toLowerCase();
+  return citations.find((citation) => {
+    try {
+      const hostname = new URL(citation.url).hostname
+        .toLowerCase()
+        .replace(/^www\./, "");
+      return evidenceText.includes(hostname);
+    } catch {
+      return false;
+    }
+  });
+}
+
 function Field({
   label,
   hint,
@@ -803,26 +829,42 @@ export function BrokerLensApp() {
               ) : null}
               {hasLiveResearch ? (
                 <div className="signal-list">
-                  {marketReport.signals.map((signal) => (
-                    <article className="signal-card" key={signal.category}>
-                      <div>
-                        <Landmark size={17} />
-                        <strong>{signal.title}</strong>
-                        <b
-                          className={
-                            signal.adjustment >= 0
-                              ? "positive-text"
-                              : "negative-text"
-                          }
-                        >
-                          {signal.adjustment >= 0 ? "+" : ""}
-                          {signal.adjustment.toFixed(2)}×
-                        </b>
-                      </div>
-                      <p>{signal.finding}</p>
-                      {signal.source ? <span>{signal.source}</span> : null}
-                    </article>
-                  ))}
+                  {marketReport.signals.map((signal) => {
+                    const citation = findSignalCitation(
+                      signal,
+                      marketReport.citations,
+                    );
+                    return (
+                      <article className="signal-card" key={signal.category}>
+                        <div>
+                          <Landmark size={17} />
+                          <strong>{signal.title}</strong>
+                          <b
+                            className={
+                              signal.adjustment >= 0
+                                ? "positive-text"
+                                : "negative-text"
+                            }
+                          >
+                            {signal.adjustment >= 0 ? "+" : ""}
+                            {signal.adjustment.toFixed(2)}×
+                          </b>
+                        </div>
+                        <p>{cleanResearchFinding(signal.finding)}</p>
+                        {signal.source ? <span>{signal.source}</span> : null}
+                        {citation ? (
+                          <a
+                            href={citation.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title={citation.title}
+                          >
+                            {shortSourceUrl(citation.url)}
+                          </a>
+                        ) : null}
+                      </article>
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="research-pending">
@@ -952,7 +994,10 @@ export function BrokerLensApp() {
                     <span className={signal.adjustment >= 0 ? "adjustment-icon positive" : "adjustment-icon negative"}>
                       {signal.adjustment >= 0 ? "+" : "−"}
                     </span>
-                    <div><strong>{signal.title}</strong><small>{signal.finding}</small></div>
+                    <div>
+                      <strong>{signal.title}</strong>
+                      <small>{cleanResearchFinding(signal.finding)}</small>
+                    </div>
                     <b className={signal.adjustment >= 0 ? "positive-text" : "negative-text"}>
                       {signal.adjustment >= 0 ? "+" : ""}
                       {signal.adjustment.toFixed(2)}×

@@ -100,6 +100,15 @@ function isSafeWebUrl(value?: string) {
   }
 }
 
+function stripInlineLinks(value: string) {
+  return value
+    .replace(/\s*\(\[[^\]]+\]\(https?:\/\/[^)]+\)\)\.?/gi, "")
+    .replace(/\s*\[[^\]]+\]\(https?:\/\/[^)]+\)\.?/gi, "")
+    .replace(/\s*\(https?:\/\/[^)]+\)\.?/gi, "")
+    .replace(/\s+https?:\/\/\S+/gi, "")
+    .trim();
+}
+
 export async function POST(request: Request) {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
@@ -248,9 +257,11 @@ Return a concise broker summary and one evidence-backed finding for each categor
         return {
           category,
           title: String(signal?.title || rule.title),
-          finding: String(
-            signal?.finding ||
-              "No strong adjustment evidence was found in the approved sources.",
+          finding: stripInlineLinks(
+            String(
+              signal?.finding ||
+                "No strong adjustment evidence was found in the approved sources.",
+            ),
           ),
           source: String(signal?.source || "No usable approved source"),
           adjustment: Math.round(adjustment * 100) / 100,
