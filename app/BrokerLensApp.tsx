@@ -29,7 +29,9 @@ import {
   defaultResearchDomains,
   demoBusiness,
   formatCurrency,
+  industryBaselines,
   industryLabels,
+  type SupportedIndustry,
 } from "@/lib/valuation";
 
 type Stage = "business" | "financials" | "quality" | "market";
@@ -45,6 +47,13 @@ type MarketReport = {
   summary: string;
   signals: { title: string; finding: string; source?: string }[];
   citations?: { title: string; url: string }[];
+};
+
+type IndustryMatchResponse = {
+  industry: SupportedIndustry;
+  label: string;
+  reason: string;
+  error?: string;
 };
 
 const STORAGE_KEY = "brokerlens.projects.v1";
@@ -178,6 +187,8 @@ export function BrokerLensApp() {
   const [newSource, setNewSource] = useState("");
   const [sourceError, setSourceError] = useState("");
   const [showResearchSources, setShowResearchSources] = useState(false);
+  const [matchingIndustry, setMatchingIndustry] = useState(false);
+  const [industryMatchNote, setIndustryMatchNote] = useState("");
   const result = useMemo(() => calculateValuation(data), [data]);
   const researchDomains = data.sourceDomains
     .split(/[\s,;]+/)
@@ -275,14 +286,61 @@ export function BrokerLensApp() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
   };
 
+  const requestIndustryMatch = async () => {
+    const customIndustry = data.customIndustry.trim();
+    if (!customIndustry) {
+      throw new Error("Enter a broad industry before matching it.");
+    }
+
+    setMatchingIndustry(true);
+    try {
+      const response = await fetch("/api/classify-industry", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ customIndustry }),
+      });
+      const payload = (await response.json()) as IndustryMatchResponse;
+      if (!response.ok) throw new Error(payload.error || "Industry matching unavailable");
+
+      setData((current) =>
+        current.industry === "other" &&
+        current.customIndustry.trim() === customIndustry
+          ? { ...current, matchedIndustry: payload.industry }
+          : current,
+      );
+      setIndustryMatchNote(payload.reason);
+      return payload.industry;
+    } finally {
+      setMatchingIndustry(false);
+    }
+  };
+
+  const matchCustomIndustry = async () => {
+    setIndustryMatchNote("");
+    try {
+      await requestIndustryMatch();
+    } catch (error) {
+      setIndustryMatchNote(
+        error instanceof Error ? error.message : "Industry matching is unavailable.",
+      );
+    }
+  };
+
   const runResearch = async () => {
     setResearching(true);
     setResearchNote("");
     try {
+      let researchData = data;
+      if (data.industry === "other") {
+        const matchedIndustry =
+          data.matchedIndustry ?? (await requestIndustryMatch());
+        researchData = { ...data, matchedIndustry };
+      }
+
       const response = await fetch("/api/research", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ data }),
+        body: JSON.stringify({ data: researchData }),
       });
       const payload = (await response.json()) as MarketReport & { error?: string };
       if (!response.ok) throw new Error(payload.error || "Research unavailable");
@@ -405,7 +463,17 @@ export function BrokerLensApp() {
                 <input value={data.name} onChange={(e) => update("name", e.target.value)} />
               </Field>
               <Field label="Industry" wide>
-                <select value={data.industry} onChange={(e) => update("industry", e.target.value as BusinessData["industry"])}>
+                <select
+                  value={data.industry}
+                  onChange={(e) => {
+                    setData((current) => ({
+                      ...current,
+                      industry: e.target.value as BusinessData["industry"],
+                      matchedIndustry: null,
+                    }));
+                    setIndustryMatchNote("");
+                  }}
+                >
                   {Object.entries(industryLabels).map(([value, label]) => <option value={value} key={value}>{label}</option>)}
                 </select>
               </Field>
@@ -418,8 +486,42 @@ export function BrokerLensApp() {
                   <input
                     value={data.customIndustry ?? ""}
                     placeholder="Enter the closest broad industry category."
-                    onChange={(e) => update("customIndustry", e.target.value)}
+                    onChange={(e) => {
+                      const customIndustry = e.target.value;
+                      setData((current) => ({
+                        ...current,
+                        customIndustry,
+                        matchedIndustry: null,
+                      }));
+                      setIndustryMatchNote("");
+                    }}
                   />
+                  <div className="industry-match">
+                    <button
+                      className="field-action"
+                      type="button"
+                      disabled={matchingIndustry || !data.customIndustry.trim()}
+                      onClick={matchCustomIndustry}
+                    >
+                      {matchingIndustry ? (
+                        <Loader2 className="spin" size={12} />
+                      ) : (
+                        <Sparkles size={12} />
+                      )}
+                      {matchingIndustry
+                        ? "Finding closest category…"
+                        : data.matchedIndustry
+                          ? "Match again"
+                          : "Find closest category with AI"}
+                    </button>
+                    {data.matchedIndustry ? (
+                      <span className="industry-match-result">
+                        Using <strong>{industryLabels[data.matchedIndustry]}</strong>{" "}
+                        at {industryBaselines[data.matchedIndustry].toFixed(2)}×
+                      </span>
+                    ) : null}
+                    {industryMatchNote ? <small>{industryMatchNote}</small> : null}
+                  </div>
                 </Field>
               ) : null}
               <Field label="City">
@@ -705,7 +807,10 @@ export function BrokerLensApp() {
               <BarChart3 size={17} />
             </div>
             <div className="math-row"><span>Normalized SDE</span><strong>{formatCurrency(result.sde)}</strong></div>
-            <div className="math-row"><span>Industry starting multiple</span><strong>{result.baseMultiple.toFixed(2)}×</strong></div>
+            <div className="math-row">
+              <span>{industryLabels[result.valuationIndustry]} starting multiple</span>
+              <strong>{result.baseMultiple.toFixed(2)}×</strong>
+            </div>
             <div className="math-row accent"><span>Risk-adjusted multiple</span><strong>{result.adjustedMultiple.toFixed(2)}×</strong></div>
             <div className="range-bar" aria-label={`Multiple range ${result.lowMultiple.toFixed(2)} to ${result.highMultiple.toFixed(2)}`}>
               <span style={{ left: "14%" }} />
@@ -751,7 +856,11 @@ export function BrokerLensApp() {
                 {savedProjects.map((project) => (
                   <article key={project.id}>
                     <button className="project-main" onClick={() => {
-                      setData(project.data);
+                      setData({
+                        ...project.data,
+                        matchedIndustry: project.data.matchedIndustry ?? null,
+                      });
+                      setIndustryMatchNote("");
                       setMarketReport(demoSignals);
                       setHasLiveResearch(false);
                       setShowProjects(false);

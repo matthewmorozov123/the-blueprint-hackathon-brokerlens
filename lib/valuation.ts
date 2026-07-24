@@ -20,12 +20,15 @@ export type Industry =
   | "pet_services"
   | "other";
 
+export type SupportedIndustry = Exclude<Industry, "other">;
+
 export type OwnerDependence = "low" | "medium" | "high";
 
 export type BusinessData = {
   name: string;
   industry: Industry;
   customIndustry: string;
+  matchedIndustry?: SupportedIndustry | null;
   city: string;
   state: string;
   netProfit: number;
@@ -52,6 +55,7 @@ export type MultipleAdjustment = {
 
 export type ValuationResult = {
   sde: number;
+  valuationIndustry: Industry;
   baseMultiple: number;
   adjustedMultiple: number;
   lowMultiple: number;
@@ -89,27 +93,33 @@ export const industryLabels: Record<Industry, string> = {
   other: "Other",
 };
 
-const baselines: Record<Industry, number> = {
+export const supportedIndustries = (
+  Object.keys(industryLabels) as Industry[]
+).filter((industry): industry is SupportedIndustry => industry !== "other");
+
+// MVP starting points mapped to broad sold-business SDE sectors. These are
+// market proxies, not substitutes for location-specific comparable sales.
+export const industryBaselines: Record<Industry, number> = {
   home_services: 3.1,
   professional_services: 3.4,
   restaurant: 2.5,
   retail: 2.55,
   manufacturing: 3.7,
-  construction: 2.9,
-  automotive: 2.9,
-  healthcare: 2.9,
-  beauty_personal_care: 2.9,
-  fitness_recreation: 2.9,
-  transportation_logistics: 2.9,
-  hospitality: 2.9,
-  education_childcare: 2.9,
-  technology_software: 2.9,
-  wholesale_distribution: 2.9,
-  agriculture: 2.9,
-  cleaning_maintenance: 2.9,
-  real_estate_services: 2.9,
-  pet_services: 2.9,
-  other: 2.9,
+  construction: 2.65,
+  automotive: 3.1,
+  healthcare: 2.72,
+  beauty_personal_care: 2.12,
+  fitness_recreation: 2.77,
+  transportation_logistics: 1.95,
+  hospitality: 2.5,
+  education_childcare: 2.89,
+  technology_software: 3.28,
+  wholesale_distribution: 2.93,
+  agriculture: 2.45,
+  cleaning_maintenance: 2.61,
+  real_estate_services: 2.66,
+  pet_services: 2.59,
+  other: 2.58,
 };
 
 export const defaultResearchDomains = [
@@ -126,6 +136,7 @@ export const demoBusiness: BusinessData = {
   name: "Desert Air Mechanical",
   industry: "home_services",
   customIndustry: "",
+  matchedIndustry: null,
   city: "Phoenix",
   state: "AZ",
   netProfit: 188_000,
@@ -159,7 +170,11 @@ export function calculateValuation(data: BusinessData): ValuationResult {
       data.depreciation +
       data.oneTimeAddbacks,
   );
-  const baseMultiple = baselines[data.industry];
+  const valuationIndustry =
+    data.industry === "other" && data.matchedIndustry
+      ? data.matchedIndustry
+      : data.industry;
+  const baseMultiple = industryBaselines[valuationIndustry];
   const adjustments: MultipleAdjustment[] = [];
 
   if (data.growthRate >= 10) {
@@ -278,6 +293,7 @@ export function calculateValuation(data: BusinessData): ValuationResult {
 
   return {
     sde,
+    valuationIndustry,
     baseMultiple,
     adjustedMultiple,
     lowMultiple,

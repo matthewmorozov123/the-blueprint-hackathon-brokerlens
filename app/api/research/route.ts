@@ -81,6 +81,10 @@ export async function POST(request: Request) {
   const domains = allowedDomains.length
     ? allowedDomains
     : [...defaultResearchDomains];
+  const matchedCategory =
+    data.industry === "other" && data.matchedIndustry
+      ? industryLabels[data.matchedIndustry]
+      : "";
   const prompt = `Research current market signals for a small business broker evaluating this company:
 
 Business: ${data.name || "Unnamed business"}
@@ -89,6 +93,7 @@ Industry: ${
       ? data.customIndustry?.trim() || "Other"
       : industryLabels[data.industry]
   }
+${matchedCategory ? `Closest valuation category: ${matchedCategory}` : ""}
 Location: ${data.city}, ${data.state}
 
 Find concise, decision-relevant evidence on:

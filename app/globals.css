@@ -232,6 +232,11 @@ html[data-theme="dark"] .theme-icon-sun { display: block; }
 .field-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .field-action { border: 0; background: none; color: var(--copper-dark); display: inline-flex; align-items: center; gap: 4px; padding: 0; font-size: 10px; font-weight: 720; cursor: pointer; }
 .field-action:hover { color: var(--copper); }
+.field-action:disabled { cursor: not-allowed; opacity: .5; }
+.industry-match { display: flex; align-items: center; flex-wrap: wrap; gap: 7px 12px; padding-top: 2px; }
+.industry-match-result { font-size: 10px; color: var(--muted); }
+.industry-match-result strong { color: var(--ink); }
+.industry-match > small { flex-basis: 100%; }
 .toggle-chevron { transition: transform .16s ease; }
 .toggle-chevron.open { transform: rotate(90deg); }
 .field small { font-size: 10px; line-height: 1.45; color: #858b88; }
