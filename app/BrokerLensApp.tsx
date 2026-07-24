@@ -165,6 +165,15 @@ const demoSignals: MarketReport = {
   ],
 };
 
+function shortSourceUrl(value: string) {
+  try {
+    const url = new URL(value);
+    return `${url.protocol}//${url.hostname}`;
+  } catch {
+    return value;
+  }
+}
+
 function Field({
   label,
   hint,
@@ -831,7 +840,15 @@ export function BrokerLensApp() {
                 <div className="citations">
                   <span>Sources</span>
                   {marketReport.citations.map((citation) => (
-                    <a key={citation.url} href={citation.url} target="_blank" rel="noreferrer">{citation.title}</a>
+                    <a
+                      key={citation.url}
+                      href={citation.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title={citation.title}
+                    >
+                      {shortSourceUrl(citation.url)}
+                    </a>
                   ))}
                 </div>
               ) : null}

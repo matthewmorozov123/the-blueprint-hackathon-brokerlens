@@ -90,6 +90,16 @@ function extractJson(text: string) {
   return JSON.parse(cleaned.slice(start, end + 1)) as ResearchReport;
 }
 
+function isSafeWebUrl(value?: string) {
+  if (!value) return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" || url.protocol === "http:";
+  } catch {
+    return false;
+  }
+}
+
 export async function POST(request: Request) {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
@@ -263,6 +273,7 @@ Return a concise broker summary and one evidence-backed finding for each categor
     const seen = new Set<string>();
     const citations = citationCandidates
       .filter((item): item is { title: string; url: string } => Boolean(item.url && item.title))
+      .filter((item) => isSafeWebUrl(item.url))
       .filter((item) => {
         if (seen.has(item.url)) return false;
         seen.add(item.url);
