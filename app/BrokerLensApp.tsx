@@ -51,6 +51,7 @@ type MarketReport = {
     title: string;
     finding: string;
     source?: string;
+    sourceUrl?: string;
     adjustment: number;
   }[];
   citations?: { title: string; url: string }[];
@@ -183,23 +184,6 @@ function cleanResearchFinding(value: string) {
     .replace(/\s*\(https?:\/\/[^)]+\)+\.?/gi, "")
     .replace(/\s*https?:\/\/\S+/gi, "")
     .trim();
-}
-
-function findSignalCitation(
-  signal: MarketReport["signals"][number],
-  citations: MarketReport["citations"] = [],
-) {
-  const evidenceText = `${signal.source ?? ""} ${signal.finding}`.toLowerCase();
-  return citations.find((citation) => {
-    try {
-      const hostname = new URL(citation.url).hostname
-        .toLowerCase()
-        .replace(/^www\./, "");
-      return evidenceText.includes(hostname);
-    } catch {
-      return false;
-    }
-  });
 }
 
 function Field({
@@ -832,10 +816,6 @@ export function BrokerLensApp() {
               {hasLiveResearch ? (
                 <div className="signal-list">
                   {marketReport.signals.map((signal) => {
-                    const citation = findSignalCitation(
-                      signal,
-                      marketReport.citations,
-                    );
                     const sourceLabel = signal.source
                       ? cleanResearchFinding(signal.source)
                       : "";
@@ -857,14 +837,14 @@ export function BrokerLensApp() {
                         </div>
                         <p>{cleanResearchFinding(signal.finding)}</p>
                         {sourceLabel ? <span>{sourceLabel}</span> : null}
-                        {citation ? (
+                        {signal.sourceUrl ? (
                           <a
-                            href={citation.url}
+                            href={signal.sourceUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            title={citation.title}
+                            title={`Open source from ${shortSourceUrl(signal.sourceUrl)}`}
                           >
-                            {shortSourceUrl(citation.url)}
+                            {shortSourceUrl(signal.sourceUrl)}
                           </a>
                         ) : null}
                       </article>
@@ -883,22 +863,6 @@ export function BrokerLensApp() {
                   </span>
                 </div>
               )}
-              {hasLiveResearch && marketReport.citations?.length ? (
-                <div className="citations">
-                  <span>Sources</span>
-                  {marketReport.citations.map((citation) => (
-                    <a
-                      key={citation.url}
-                      href={citation.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      title={citation.title}
-                    >
-                      {shortSourceUrl(citation.url)}
-                    </a>
-                  ))}
-                </div>
-              ) : null}
             </div>
           ) : null}
 
