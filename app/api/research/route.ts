@@ -102,10 +102,12 @@ function isSafeWebUrl(value?: string) {
 
 function stripInlineLinks(value: string) {
   return value
-    .replace(/\s*\(\[[^\]]+\]\(https?:\/\/[^)]+\)\)\.?/gi, "")
-    .replace(/\s*\[[^\]]+\]\(https?:\/\/[^)]+\)\.?/gi, "")
-    .replace(/\s*\(https?:\/\/[^)]+\)\.?/gi, "")
-    .replace(/\s+https?:\/\/\S+/gi, "")
+    .replace(/\s*\(\[[^\]]+\]\(https?:\/\/[^)]+\)+\.?/gi, "")
+    .replace(/\s*\[[^\]]+\]\(https?:\/\/[^)]+\)+\.?/gi, "")
+    .replace(/\s*\(\[[^\]]+\]\)\.?/gi, "")
+    .replace(/\s*\[[^\]]+\]\.?/gi, "")
+    .replace(/\s*\(https?:\/\/[^)]+\)+\.?/gi, "")
+    .replace(/\s*https?:\/\/\S+/gi, "")
     .trim();
 }
 
@@ -263,7 +265,9 @@ Return a concise broker summary and one evidence-backed finding for each categor
                 "No strong adjustment evidence was found in the approved sources.",
             ),
           ),
-          source: String(signal?.source || "No usable approved source"),
+          source: stripInlineLinks(
+            String(signal?.source || "No usable approved source"),
+          ),
           adjustment: Math.round(adjustment * 100) / 100,
         };
       },

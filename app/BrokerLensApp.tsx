@@ -176,10 +176,12 @@ function shortSourceUrl(value: string) {
 
 function cleanResearchFinding(value: string) {
   return value
-    .replace(/\s*\(\[[^\]]+\]\(https?:\/\/[^)]+\)\)\.?/gi, "")
-    .replace(/\s*\[[^\]]+\]\(https?:\/\/[^)]+\)\.?/gi, "")
-    .replace(/\s*\(https?:\/\/[^)]+\)\.?/gi, "")
-    .replace(/\s+https?:\/\/\S+/gi, "")
+    .replace(/\s*\(\[[^\]]+\]\(https?:\/\/[^)]+\)+\.?/gi, "")
+    .replace(/\s*\[[^\]]+\]\(https?:\/\/[^)]+\)+\.?/gi, "")
+    .replace(/\s*\(\[[^\]]+\]\)\.?/gi, "")
+    .replace(/\s*\[[^\]]+\]\.?/gi, "")
+    .replace(/\s*\(https?:\/\/[^)]+\)+\.?/gi, "")
+    .replace(/\s*https?:\/\/\S+/gi, "")
     .trim();
 }
 
@@ -834,6 +836,9 @@ export function BrokerLensApp() {
                       signal,
                       marketReport.citations,
                     );
+                    const sourceLabel = signal.source
+                      ? cleanResearchFinding(signal.source)
+                      : "";
                     return (
                       <article className="signal-card" key={signal.category}>
                         <div>
@@ -851,7 +856,7 @@ export function BrokerLensApp() {
                           </b>
                         </div>
                         <p>{cleanResearchFinding(signal.finding)}</p>
-                        {signal.source ? <span>{signal.source}</span> : null}
+                        {sourceLabel ? <span>{sourceLabel}</span> : null}
                         {citation ? (
                           <a
                             href={citation.url}
