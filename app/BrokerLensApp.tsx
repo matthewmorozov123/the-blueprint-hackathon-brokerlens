@@ -186,6 +186,58 @@ function cleanResearchFinding(value: string) {
     .trim();
 }
 
+const categorySourceDomains: Record<string, string[]> = {
+  industry_transactions: ["bizbuysell.com", "ibba.org"],
+  local_demand: ["census.gov", "bea.gov"],
+  labor: ["bls.gov", "careeronestop.org"],
+  competition: ["sizeup.com", "census.gov"],
+};
+
+function findSignalSourceUrl(
+  signal: MarketReport["signals"][number],
+  citations: MarketReport["citations"] = [],
+) {
+  if (signal.sourceUrl) {
+    try {
+      const url = new URL(signal.sourceUrl);
+      if (url.protocol === "https:" || url.protocol === "http:") {
+        return signal.sourceUrl;
+      }
+    } catch {
+      // Fall through to verified web-search citations.
+    }
+  }
+
+  const evidence = `${signal.source ?? ""} ${signal.finding}`
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+  const directMatch = citations.find((citation) => {
+    try {
+      const hostname = new URL(citation.url).hostname
+        .toLowerCase()
+        .replace(/^www\./, "");
+      return evidence.includes(hostname.replace(/[^a-z0-9]/g, ""));
+    } catch {
+      return false;
+    }
+  });
+  if (directMatch) return directMatch.url;
+
+  const preferredDomains = categorySourceDomains[signal.category] ?? [];
+  return citations.find((citation) => {
+    try {
+      const hostname = new URL(citation.url).hostname
+        .toLowerCase()
+        .replace(/^www\./, "");
+      return preferredDomains.some(
+        (domain) => hostname === domain || hostname.endsWith(`.${domain}`),
+      );
+    } catch {
+      return false;
+    }
+  })?.url;
+}
+
 function Field({
   label,
   hint,
@@ -816,6 +868,10 @@ export function BrokerLensApp() {
               {hasLiveResearch ? (
                 <div className="signal-list">
                   {marketReport.signals.map((signal) => {
+                    const sourceUrl = findSignalSourceUrl(
+                      signal,
+                      marketReport.citations,
+                    );
                     const sourceLabel = signal.source
                       ? cleanResearchFinding(signal.source)
                       : "";
@@ -837,14 +893,14 @@ export function BrokerLensApp() {
                         </div>
                         <p>{cleanResearchFinding(signal.finding)}</p>
                         {sourceLabel ? <span>{sourceLabel}</span> : null}
-                        {signal.sourceUrl ? (
+                        {sourceUrl ? (
                           <a
-                            href={signal.sourceUrl}
+                            href={sourceUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            title={`Open source from ${shortSourceUrl(signal.sourceUrl)}`}
+                            title={`Open full source from ${shortSourceUrl(sourceUrl)}`}
                           >
-                            {shortSourceUrl(signal.sourceUrl)}
+                            {shortSourceUrl(sourceUrl)}
                           </a>
                         ) : null}
                       </article>
