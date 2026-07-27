@@ -42,6 +42,7 @@ export type BusinessData = {
   largestCustomer: number;
   leaseYears: number;
   inventory: number;
+  ffeValue: number;
   realEstateValue: number;
   excessAssets: number;
   debtAssumed: number;
@@ -129,6 +130,7 @@ export const demoBusiness: BusinessData = {
   largestCustomer: 7,
   leaseYears: 4,
   inventory: 62_000,
+  ffeValue: 0,
   realEstateValue: 0,
   excessAssets: 18_000,
   debtAssumed: 35_000,
@@ -257,6 +259,7 @@ export function calculateValuation(
   const highMultiple = adjustedMultiple + 0.4;
   const balanceSheetAdjustment =
     data.inventory +
+    (data.ffeValue ?? 0) +
     (data.realEstateValue ?? 0) +
     data.excessAssets -
     data.debtAssumed;

@@ -701,6 +701,12 @@ export function BrokerLensApp() {
               </Field>
               <MoneyField label="Inventory included" value={data.inventory} onChange={(value) => numberUpdate("inventory", value)} />
               <MoneyField
+                label="Furniture, fixtures & equipment (FF&E)"
+                hint="Enter the current fair-market value of the FF&E included in the sale."
+                value={data.ffeValue}
+                onChange={(value) => numberUpdate("ffeValue", value)}
+              />
+              <MoneyField
                 label="Real estate included in sale"
                 hint="Use the property's appraised value. Enter $0 when the property is not part of the sale."
                 value={data.realEstateValue}
@@ -966,6 +972,12 @@ export function BrokerLensApp() {
                   </strong>
                 </div>
                 <div className="math-row accent"><span>Final multiple</span><strong>{result.adjustedMultiple.toFixed(2)}×</strong></div>
+                {data.ffeValue > 0 ? (
+                  <div className="math-row">
+                    <span>FF&amp;E included</span>
+                    <strong className="positive-text">+{formatCurrency(data.ffeValue)}</strong>
+                  </div>
+                ) : null}
                 {data.realEstateValue > 0 ? (
                   <div className="math-row">
                     <span>Real estate included</span>
@@ -1084,6 +1096,7 @@ export function BrokerLensApp() {
                       setData({
                         ...project.data,
                         matchedIndustry: project.data.matchedIndustry ?? null,
+                        ffeValue: project.data.ffeValue ?? 0,
                         realEstateValue: project.data.realEstateValue ?? 0,
                       });
                       setIndustryMatchNote("");
