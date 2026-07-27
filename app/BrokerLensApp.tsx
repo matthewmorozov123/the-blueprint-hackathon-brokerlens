@@ -1132,9 +1132,22 @@ function MoneyField({
   value: number | string;
   onChange: (value: string) => void;
 }) {
+  const formattedValue = String(value)
+    .replace(/\D/g, "")
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+
   return (
     <Field label={label} hint={hint}>
-      <div className="input-affix"><span>$</span><input type="number" min="0" step="1000" value={value} onChange={(e) => onChange(e.target.value)} /></div>
+      <div className="input-affix">
+        <span>$</span>
+        <input
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9,]*"
+          value={formattedValue}
+          onChange={(event) => onChange(event.target.value.replace(/\D/g, ""))}
+        />
+      </div>
     </Field>
   );
 }
