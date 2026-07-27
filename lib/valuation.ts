@@ -284,7 +284,7 @@ export function calculateValuation(
     lowValue,
     midpointValue,
     highValue,
-    askingPrice: roundTo(highValue * 1.06),
+    askingPrice: roundTo(midpointValue * 1.06),
     likelySaleLow: roundTo(lowValue * 1.02),
     likelySaleHigh: roundTo(midpointValue * 1.03),
     adjustments,
