@@ -50,8 +50,13 @@ type MarketReport = {
     category: string;
     title: string;
     finding: string;
-    source?: string;
-    sourceUrl?: string;
+    sources: {
+      description: string;
+      url: string;
+    }[];
+    evidenceTier?: "exact" | "related" | "broad" | "weak" | "not_applicable";
+    evidenceTierLabel?: string;
+    adjustmentLimit?: number;
     adjustment: number;
   }[];
   citations?: { title: string; url: string }[];
@@ -146,21 +151,21 @@ const demoSignals: MarketReport = {
       category: "local_demand",
       title: "Local demand",
       finding: "Use Census and BEA data to measure population, income, and establishment growth.",
-      source: "census.gov · bea.gov",
+      sources: [],
       adjustment: 0,
     },
     {
       category: "labor",
       title: "Labor pressure",
       finding: "Use QCEW wage and employment data to test payroll and hiring risk.",
-      source: "bls.gov",
+      sources: [],
       adjustment: 0,
     },
     {
       category: "industry_transactions",
       title: "Transaction evidence",
       finding: "Compare the earnings multiple against closed and listed businesses.",
-      source: "bizbuysell.com",
+      sources: [],
       adjustment: 0,
     },
   ],
@@ -184,58 +189,6 @@ function cleanResearchFinding(value: string) {
     .replace(/\s*\(https?:\/\/[^)]+\)+\.?/gi, "")
     .replace(/\s*https?:\/\/\S+/gi, "")
     .trim();
-}
-
-const categorySourceDomains: Record<string, string[]> = {
-  industry_transactions: ["bizbuysell.com", "ibba.org"],
-  local_demand: ["census.gov", "bea.gov"],
-  labor: ["bls.gov", "careeronestop.org"],
-  competition: ["sizeup.com", "census.gov"],
-};
-
-function findSignalSourceUrl(
-  signal: MarketReport["signals"][number],
-  citations: MarketReport["citations"] = [],
-) {
-  if (signal.sourceUrl) {
-    try {
-      const url = new URL(signal.sourceUrl);
-      if (url.protocol === "https:" || url.protocol === "http:") {
-        return signal.sourceUrl;
-      }
-    } catch {
-      // Fall through to verified web-search citations.
-    }
-  }
-
-  const evidence = `${signal.source ?? ""} ${signal.finding}`
-    .toLowerCase()
-    .replace(/[^a-z0-9]/g, "");
-  const directMatch = citations.find((citation) => {
-    try {
-      const hostname = new URL(citation.url).hostname
-        .toLowerCase()
-        .replace(/^www\./, "");
-      return evidence.includes(hostname.replace(/[^a-z0-9]/g, ""));
-    } catch {
-      return false;
-    }
-  });
-  if (directMatch) return directMatch.url;
-
-  const preferredDomains = categorySourceDomains[signal.category] ?? [];
-  return citations.find((citation) => {
-    try {
-      const hostname = new URL(citation.url).hostname
-        .toLowerCase()
-        .replace(/^www\./, "");
-      return preferredDomains.some(
-        (domain) => hostname === domain || hostname.endsWith(`.${domain}`),
-      );
-    } catch {
-      return false;
-    }
-  })?.url;
 }
 
 function Field({
@@ -867,16 +820,8 @@ export function BrokerLensApp() {
               ) : null}
               {hasLiveResearch ? (
                 <div className="signal-list">
-                  {marketReport.signals.map((signal) => {
-                    const sourceUrl = findSignalSourceUrl(
-                      signal,
-                      marketReport.citations,
-                    );
-                    const sourceLabel = signal.source
-                      ? cleanResearchFinding(signal.source)
-                      : "";
-                    return (
-                      <article className="signal-card" key={signal.category}>
+                  {marketReport.signals.map((signal) => (
+                    <article className="signal-card" key={signal.category}>
                         <div>
                           <Landmark size={17} />
                           <strong>{signal.title}</strong>
@@ -892,20 +837,40 @@ export function BrokerLensApp() {
                           </b>
                         </div>
                         <p>{cleanResearchFinding(signal.finding)}</p>
-                        {sourceLabel ? <span>{sourceLabel}</span> : null}
-                        {sourceUrl ? (
-                          <a
-                            href={sourceUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            title={`Open full source from ${shortSourceUrl(sourceUrl)}`}
-                          >
-                            {shortSourceUrl(sourceUrl)}
-                          </a>
+                        {signal.category === "industry_transactions" &&
+                        signal.evidenceTierLabel &&
+                        signal.adjustmentLimit !== undefined ? (
+                          <div className="evidence-tier">
+                            <span>{signal.evidenceTierLabel}</span>
+                            <small>
+                              Server cap ±{signal.adjustmentLimit.toFixed(2)}×
+                            </small>
+                          </div>
                         ) : null}
-                      </article>
-                    );
-                  })}
+                        {signal.sources.length > 0 ? (
+                          <div className="signal-sources">
+                            <span>
+                              {signal.sources.length === 1 ? "Source" : "Sources"}
+                            </span>
+                            {signal.sources.map((source) => (
+                              <div className="signal-source" key={source.url}>
+                                {source.description ? (
+                                  <small>{cleanResearchFinding(source.description)}</small>
+                                ) : null}
+                                <a
+                                  href={source.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  title={`Open full source: ${source.url}`}
+                                >
+                                  {shortSourceUrl(source.url)}
+                                </a>
+                              </div>
+                            ))}
+                          </div>
+                        ) : null}
+                    </article>
+                  ))}
                 </div>
               ) : (
                 <div className="research-pending">
