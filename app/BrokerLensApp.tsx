@@ -969,7 +969,22 @@ export function BrokerLensApp() {
               </div>
 
               <div className="adjustment-list">
-                <div className="result-section-heading"><span>Why the multiple moved</span><Info size={16} /></div>
+                <div className="result-section-heading">
+                  <span>Why the multiple moved</span>
+                  <button
+                    className="info-tooltip"
+                    type="button"
+                    aria-label="Explain how the final multiple is calculated"
+                    aria-describedby="multiple-adjustment-tooltip"
+                  >
+                    <Info size={16} aria-hidden="true" />
+                    <span id="multiple-adjustment-tooltip" role="tooltip">
+                      The final multiple starts at 3.00×, then adds the business-quality
+                      and AI market adjustments shown below. Positive factors raise the
+                      multiple; negative factors lower it.
+                    </span>
+                  </button>
+                </div>
                 <span className="adjustment-group-label">Business quality</span>
                 {result.adjustments.map((item) => (
                   <div className="adjustment" key={`${item.label}-${item.value}`}>
