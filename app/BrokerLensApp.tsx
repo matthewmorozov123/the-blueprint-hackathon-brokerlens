@@ -700,6 +700,12 @@ export function BrokerLensApp() {
                 <input type="number" min="0" step="0.5" value={data.leaseYears} onChange={(e) => numberUpdate("leaseYears", e.target.value)} />
               </Field>
               <MoneyField label="Inventory included" value={data.inventory} onChange={(value) => numberUpdate("inventory", value)} />
+              <MoneyField
+                label="Real estate included in sale"
+                hint="Use the property's appraised value. Enter $0 when the property is not part of the sale."
+                value={data.realEstateValue}
+                onChange={(value) => numberUpdate("realEstateValue", value)}
+              />
               <MoneyField label="Excess / non-operating assets" value={data.excessAssets} onChange={(value) => numberUpdate("excessAssets", value)} />
               <MoneyField label="Debt assumed by buyer" value={data.debtAssumed} onChange={(value) => numberUpdate("debtAssumed", value)} />
               <div className="risk-preview field-wide">
@@ -960,6 +966,12 @@ export function BrokerLensApp() {
                   </strong>
                 </div>
                 <div className="math-row accent"><span>Final multiple</span><strong>{result.adjustedMultiple.toFixed(2)}×</strong></div>
+                {data.realEstateValue > 0 ? (
+                  <div className="math-row">
+                    <span>Real estate included</span>
+                    <strong className="positive-text">+{formatCurrency(data.realEstateValue)}</strong>
+                  </div>
+                ) : null}
                 <div className="range-bar" aria-label={`Multiple range ${result.lowMultiple.toFixed(2)} to ${result.highMultiple.toFixed(2)}`}>
                   <span style={{ left: "14%" }} />
                   <span className="range-mid" style={{ left: "50%" }} />
@@ -1072,6 +1084,7 @@ export function BrokerLensApp() {
                       setData({
                         ...project.data,
                         matchedIndustry: project.data.matchedIndustry ?? null,
+                        realEstateValue: project.data.realEstateValue ?? 0,
                       });
                       setIndustryMatchNote("");
                       setMarketReport(demoSignals);
@@ -1095,9 +1108,19 @@ export function BrokerLensApp() {
   );
 }
 
-function MoneyField({ label, value, onChange }: { label: string; value: number | string; onChange: (value: string) => void }) {
+function MoneyField({
+  label,
+  hint,
+  value,
+  onChange,
+}: {
+  label: string;
+  hint?: string;
+  value: number | string;
+  onChange: (value: string) => void;
+}) {
   return (
-    <Field label={label}>
+    <Field label={label} hint={hint}>
       <div className="input-affix"><span>$</span><input type="number" min="0" step="1000" value={value} onChange={(e) => onChange(e.target.value)} /></div>
     </Field>
   );

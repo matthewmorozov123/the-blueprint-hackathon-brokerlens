@@ -42,6 +42,7 @@ export type BusinessData = {
   largestCustomer: number;
   leaseYears: number;
   inventory: number;
+  realEstateValue: number;
   excessAssets: number;
   debtAssumed: number;
   sourceDomains: string;
@@ -128,6 +129,7 @@ export const demoBusiness: BusinessData = {
   largestCustomer: 7,
   leaseYears: 4,
   inventory: 62_000,
+  realEstateValue: 0,
   excessAssets: 18_000,
   debtAssumed: 35_000,
   sourceDomains: defaultResearchDomains.join(", "),
@@ -254,7 +256,10 @@ export function calculateValuation(
   const lowMultiple = Math.max(1.25, adjustedMultiple - 0.4);
   const highMultiple = adjustedMultiple + 0.4;
   const balanceSheetAdjustment =
-    data.inventory + data.excessAssets - data.debtAssumed;
+    data.inventory +
+    (data.realEstateValue ?? 0) +
+    data.excessAssets -
+    data.debtAssumed;
   const lowValue = Math.max(0, roundTo(sde * lowMultiple + balanceSheetAdjustment));
   const midpointValue = Math.max(
     0,
