@@ -2,13 +2,13 @@
 
 **Price the business. Show the reasoning.**
 
-[![Live on Vercel](https://img.shields.io/badge/Live_on-Vercel-000000?logo=vercel)](https://brokerlens.vercel.app)
+[![Live on Vercel](https://img.shields.io/badge/Live_on-Vercel-000000?logo=vercel)](https://the-blueprint-hackathon-brokerlens.vercel.app/)
 [![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 
 ![BrokerLens — transparent business valuation workspace](public/og.png)
 
-🔗 **Live app:** https://brokerlens.vercel.app
+🔗 **Live app:** https://the-blueprint-hackathon-brokerlens.vercel.app/
 
 BrokerLens turns owner-provided financials, business-quality signals, and sourced
 market research into a preliminary small-business valuation. It shows the normalized
@@ -128,8 +128,8 @@ system—not the valuation system.
 Requirements: Node.js 22.13 or newer.
 
 ```bash
-git clone https://github.com/matthewmorozov123/brokerlens.git
-cd brokerlens
+git clone https://github.com/matthewmorozov123/the-blueprint-hackathon-brokerlens.git
+cd the-blueprint-hackathon-brokerlens
 npm install
 cp .env.example .env.local
 npm run dev
